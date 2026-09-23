@@ -1,0 +1,51 @@
+# Current school status
+# Replace the two entity IDs below with the entity IDs from your Home Assistant instance.
+
+type: markdown
+content: >-
+  {% set status = 'sensor.school_class_school_status' %}
+  {% set today = 'sensor.school_class_daily_summary' %}
+  {% set s = states(status) %}
+
+  ## 🎓 Schulstatus
+
+  {% if s == 'school_free' %}
+
+  🏠 **Heute ist schulfrei**
+
+  {% elif s == 'before_school' %}
+
+  ⏰ **Noch vor Schulbeginn**
+
+  Beginn um
+  **{{ as_datetime(state_attr(status, 'schulbeginn')).strftime('%H:%M') }} Uhr**
+
+  {% elif s == 'lesson' %}
+
+  🎓 **{{ state_attr(status, 'aktuelles_fach') }}**
+
+  bis **{{ as_datetime(state_attr(status, 'aktuelle_stunde_bis')).strftime('%H:%M') }} Uhr**
+
+  {% if state_attr(status, 'naechstes_fach') %}
+  ⏭️ Danach **{{ state_attr(status, 'naechstes_fach') }}**
+  um {{ as_datetime(state_attr(status, 'naechste_stunde_ab')).strftime('%H:%M') }} Uhr
+  {% endif %}
+
+  {% elif s == 'break' %}
+
+  ☕ **Pause**
+
+  {% if state_attr(status, 'naechstes_fach') %}
+  ⏭️ Weiter mit **{{ state_attr(status, 'naechstes_fach') }}**
+  um {{ as_datetime(state_attr(status, 'naechste_stunde_ab')).strftime('%H:%M') }} Uhr
+  {% endif %}
+
+  {% elif s == 'after_school' %}
+
+  🏠 **Schule beendet**
+
+  {% else %}
+
+  ❔ Schulstatus aktuell nicht verfügbar
+
+  {% endif %}
