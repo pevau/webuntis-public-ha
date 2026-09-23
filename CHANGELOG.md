@@ -2,6 +2,14 @@
 
 All notable changes to **WebUntis Public Timetable** are documented here.
 
+## [0.7.6] - 2026-09-23
+
+### Added
+
+- Added a Home Assistant button entity for each configured class to refresh the timetable immediately.
+- The button uses the existing DataUpdateCoordinator refresh path, including the integration's normal retry, cache and error handling.
+- Added German and English names for the new button entity.
+
 ## [0.7.5] - 2026-09-23
 
 ### Added
