@@ -79,6 +79,8 @@ jobs:
           test -f custom_components/webuntis_public/manifest.json
           test -f custom_components/webuntis_public/__init__.py
           test -f custom_components/webuntis_public/config_flow.py
+          test -f custom_components/webuntis_public/brand/icon.png
+          test -f custom_components/webuntis_public/brand/dark_icon.png
           test -f custom_components/webuntis_public/translations/en.json
           test -f custom_components/webuntis_public/translations/de.json
           test ! -f custom_components/webuntis_public/strings.json
