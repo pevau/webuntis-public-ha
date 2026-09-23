@@ -162,12 +162,6 @@
           }
         }
       },
-      "today_start": {
-        "name": "School starts today"
-      },
-      "today_end": {
-        "name": "School ends today"
-      },
       "school_day_progress": {
         "name": "School day progress",
         "state_attributes": {
@@ -188,26 +182,6 @@
           },
           "inklusive_pausen": {
             "name": "Includes breaks"
-          }
-        }
-      },
-      "instruction_progress": {
-        "name": "Teaching progress",
-        "state_attributes": {
-          "schulfrei": {
-            "name": "No school"
-          },
-          "unterricht_minuten_absolviert": {
-            "name": "Teaching minutes completed"
-          },
-          "unterricht_minuten_gesamt": {
-            "name": "Total teaching minutes"
-          },
-          "unterricht_minuten_verbleibend": {
-            "name": "Remaining teaching minutes"
-          },
-          "pausen_nicht_mitgerechnet": {
-            "name": "Breaks excluded"
           }
         }
       },
@@ -314,6 +288,33 @@
           },
           "naechste_stunde_beginn": {
             "name": "Next lesson starts"
+          },
+          "planmaessiger_schulbeginn": {
+            "name": "Scheduled school start"
+          },
+          "planmaessiger_schulschluss": {
+            "name": "Scheduled school end"
+          },
+          "spaeterer_schulbeginn_minuten": {
+            "name": "Later school start in minutes"
+          },
+          "frueherer_schulschluss_minuten": {
+            "name": "Earlier school end in minutes"
+          },
+          "erste_stunde_entfaellt": {
+            "name": "First lesson cancelled"
+          },
+          "letzte_stunde_entfaellt": {
+            "name": "Last lesson cancelled"
+          },
+          "unterrichtsfortschritt": {
+            "name": "Teaching progress"
+          },
+          "unterricht_minuten_absolviert": {
+            "name": "Teaching minutes completed"
+          },
+          "unterricht_minuten_gesamt": {
+            "name": "Total teaching minutes"
           }
         }
       },
@@ -389,123 +390,9 @@
           },
           "stundenplan": {
             "name": "Timetable"
-          }
-        }
-      }
-    },
-    "binary_sensor": {
-      "today_has_changes": {
-        "name": "Timetable change today",
-        "state_attributes": {
-          "anzahl": {
-            "name": "Count"
           },
-          "faecher": {
-            "name": "Subjects"
-          }
-        }
-      },
-      "school_free_today": {
-        "name": "No school today",
-        "state_attributes": {
-          "geplante_ausgefallene_stunden": {
-            "name": "Scheduled cancelled lessons"
-          },
-          "grund": {
-            "name": "Reason",
-            "state": {
-              "no_active_lessons": "No active lessons in the public timetable"
-            }
-          }
-        }
-      },
-      "school_free_tomorrow": {
-        "name": "No school tomorrow",
-        "state_attributes": {
-          "geplante_ausgefallene_stunden": {
-            "name": "Scheduled cancelled lessons"
-          },
-          "grund": {
-            "name": "Reason",
-            "state": {
-              "no_active_lessons": "No active lessons in the public timetable"
-            }
-          }
-        }
-      },
-      "lesson_running": {
-        "name": "Lesson in progress",
-        "state_attributes": {
-          "faecher": {
-            "name": "Subjects"
-          },
-          "beginn": {
-            "name": "Start"
-          },
-          "ende": {
-            "name": "End"
-          }
-        }
-      },
-      "school_starts_later_today": {
-        "name": "School starts later today",
-        "state_attributes": {
-          "planmaessiger_beginn": {
-            "name": "Scheduled school start"
-          },
-          "tatsaechlicher_beginn": {
-            "name": "Actual school start"
-          },
-          "spaeter_um_minuten": {
-            "name": "Minutes later"
-          },
-          "ausgefallene_faecher_davor": {
-            "name": "Cancelled subjects before start"
-          }
-        }
-      },
-      "school_ends_earlier_today": {
-        "name": "School ends earlier today",
-        "state_attributes": {
-          "planmaessiger_schluss": {
-            "name": "Scheduled school end"
-          },
-          "tatsaechlicher_schluss": {
-            "name": "Actual school end"
-          },
-          "frueher_um_minuten": {
-            "name": "Minutes earlier"
-          },
-          "ausgefallene_faecher_danach": {
-            "name": "Cancelled subjects after end"
-          }
-        }
-      },
-      "first_lesson_cancelled_today": {
-        "name": "First lesson cancelled today",
-        "state_attributes": {
-          "beginn": {
-            "name": "Start"
-          },
-          "ende": {
-            "name": "End"
-          },
-          "faecher": {
-            "name": "Subjects"
-          }
-        }
-      },
-      "last_lesson_cancelled_today": {
-        "name": "Last lesson cancelled today",
-        "state_attributes": {
-          "beginn": {
-            "name": "Start"
-          },
-          "ende": {
-            "name": "End"
-          },
-          "faecher": {
-            "name": "Subjects"
+          "morgen_schulfrei": {
+            "name": "No school tomorrow"
           }
         }
       }
