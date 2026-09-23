@@ -2,6 +2,13 @@
 
 All notable changes to **WebUntis Public Timetable** are documented here.
 
+## [0.7.9] - 2026-09-23
+
+### Fixed
+
+- Teacher names now prefer the WebUntis `longName` value instead of the school-configurable `displayName`, so full names are shown when the public timetable exposes them.
+- The existing display name and short name remain fallbacks for schools that do not publish a long teacher name.
+
 ## [0.7.8] - 2026-09-23
 
 ### Added
