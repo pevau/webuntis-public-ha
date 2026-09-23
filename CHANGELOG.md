@@ -2,6 +2,15 @@
 
 All notable changes to **WebUntis Public Timetable** are documented here.
 
+## [0.7.4] - 2026-09-23
+
+### Added
+
+- Added a date sensor for the next school day after today.
+- Added start and end timestamp sensors for the next school day.
+- The next-school-day lookup skips days without active lessons and uses the configured look-ahead range, so it reuses the coordinator cache without extra WebUntis requests.
+- The next-school-day sensor includes school start, school end, lesson count and subjects as attributes.
+
 ## [0.7.3] - 2026-09-23
 
 ### Fixed

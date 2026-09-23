@@ -302,6 +302,29 @@
             "name": "Wochen"
           }
         }
+      },
+      "next_school_day": {
+        "name": "Nächster Schultag",
+        "state_attributes": {
+          "schulbeginn": {
+            "name": "Schulbeginn"
+          },
+          "schulschluss": {
+            "name": "Schulschluss"
+          },
+          "stunden": {
+            "name": "Stunden"
+          },
+          "faecher": {
+            "name": "Fächer"
+          }
+        }
+      },
+      "next_school_day_start": {
+        "name": "Schulbeginn nächster Schultag"
+      },
+      "next_school_day_end": {
+        "name": "Schulschluss nächster Schultag"
       }
     },
     "binary_sensor": {

@@ -302,6 +302,29 @@
             "name": "Weeks"
           }
         }
+      },
+      "next_school_day": {
+        "name": "Next school day",
+        "state_attributes": {
+          "schulbeginn": {
+            "name": "School starts"
+          },
+          "schulschluss": {
+            "name": "School ends"
+          },
+          "stunden": {
+            "name": "Lessons"
+          },
+          "faecher": {
+            "name": "Subjects"
+          }
+        }
+      },
+      "next_school_day_start": {
+        "name": "Next school day starts"
+      },
+      "next_school_day_end": {
+        "name": "Next school day ends"
       }
     },
     "binary_sensor": {
