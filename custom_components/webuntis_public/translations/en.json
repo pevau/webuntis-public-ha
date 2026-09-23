@@ -1,0 +1,387 @@
+{
+  "title": "WebUntis Public Timetable",
+  "config": {
+    "step": {
+      "user": {
+        "title": "WebUntis Public Timetable",
+        "description": "Choose how you want to configure the public timetable.",
+        "menu_options": {
+          "school_search": "Search for a school",
+          "public_link": "Use a public WebUntis link",
+          "manual": "Enter server and school manually"
+        }
+      },
+      "school_search": {
+        "title": "Search for a school",
+        "description": "Search by school name, city or address.",
+        "data": {
+          "search_query": "School"
+        }
+      },
+      "school_select": {
+        "title": "Select school",
+        "description": "Select the WebUntis school.",
+        "data": {
+          "school_result": "School"
+        }
+      },
+      "public_link": {
+        "title": "Use public link",
+        "description": "Paste the public WebUntis link for the school or class.",
+        "data": {
+          "public_link": "Public WebUntis link"
+        }
+      },
+      "manual": {
+        "title": "Configure WebUntis manually",
+        "description": "Enter the server and, optionally, the technical school name.",
+        "data": {
+          "server": "WebUntis server",
+          "school": "Technical school name"
+        }
+      },
+      "class_select": {
+        "title": "Select classes",
+        "description": "Select one or more publicly available classes.",
+        "data": {
+          "class_ids": "Classes"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "The WebUntis school search could not be reached.",
+      "no_schools": "No matching school was found.",
+      "search_too_short": "Enter at least three characters.",
+      "invalid_school": "Invalid school.",
+      "invalid_public_link": "The public WebUntis link could not be recognized.",
+      "invalid_server": "Invalid WebUntis server.",
+      "cannot_load_classes": "The public classes could not be loaded. Check whether the timetable is publicly available.",
+      "no_public_classes": "No public classes were found for this school.",
+      "no_class_selected": "Select at least one class."
+    },
+    "abort": {
+      "already_configured": "This class is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Configure WebUntis Public",
+        "description": "Select classes and customize how timetable entities are displayed and behave.",
+        "data": {
+          "class_ids": "Classes",
+          "title_format": "Calendar title",
+          "show_cancelled": "Show cancelled lessons in the calendar",
+          "show_teacher": "Show teacher in event details",
+          "show_room": "Show room in event details and as location",
+          "show_class": "Show class in event details",
+          "next_lesson_days": "Search range for “Next lesson”"
+        },
+        "data_description": {
+          "class_ids": "Each selected class gets its own calendar and sensors.",
+          "title_format": "Controls which information is shown directly in a calendar event title.",
+          "show_cancelled": "Cancelled lessons remain visible and are marked as cancelled.",
+          "show_teacher": "Shows the teacher or teachers in the event description.",
+          "show_room": "Shows the room in the event details and as the calendar location.",
+          "show_class": "Shows the selected class in the event description.",
+          "next_lesson_days": "How many days ahead to search for the next lesson."
+        }
+      }
+    },
+    "error": {
+      "no_class_selected": "Select at least one class."
+    }
+  },
+  "selector": {
+    "title_format": {
+      "options": {
+        "subject": "Subject only",
+        "subject_room": "Subject · Room",
+        "subject_teacher": "Subject · Teacher",
+        "subject_room_teacher": "Subject · Room · Teacher"
+      }
+    }
+  },
+  "entity": {
+    "calendar": {
+      "timetable": {
+        "name": "Timetable"
+      }
+    },
+    "sensor": {
+      "current_lesson": {
+        "name": "Current lesson",
+        "state": {
+          "no_lesson": "No lesson",
+          "lesson": "Lesson"
+        },
+        "state_attributes": {
+          "beginn": {
+            "name": "Start"
+          },
+          "ende": {
+            "name": "End"
+          },
+          "raum": {
+            "name": "Room"
+          },
+          "lehrer": {
+            "name": "Teacher"
+          },
+          "geaendert": {
+            "name": "Changed"
+          },
+          "laeuft_gerade": {
+            "name": "In progress"
+          }
+        }
+      },
+      "next_lesson": {
+        "name": "Next lesson",
+        "state": {
+          "lesson": "Lesson"
+        },
+        "state_attributes": {
+          "beginn": {
+            "name": "Start"
+          },
+          "ende": {
+            "name": "End"
+          },
+          "raum": {
+            "name": "Room"
+          },
+          "lehrer": {
+            "name": "Teacher"
+          },
+          "geaendert": {
+            "name": "Changed"
+          },
+          "laeuft_gerade": {
+            "name": "In progress"
+          }
+        }
+      },
+      "today_start": {
+        "name": "School starts today"
+      },
+      "today_end": {
+        "name": "School ends today"
+      },
+      "tomorrow_start": {
+        "name": "School starts tomorrow"
+      },
+      "tomorrow_end": {
+        "name": "School ends tomorrow"
+      },
+      "today_lesson_count": {
+        "name": "Lessons today",
+        "unit_of_measurement": "lessons"
+      },
+      "remaining_lessons_today": {
+        "name": "Remaining lessons today",
+        "unit_of_measurement": "lessons",
+        "state_attributes": {
+          "faecher": {
+            "name": "Subjects"
+          },
+          "inklusive_aktuelle_stunde": {
+            "name": "Includes current lesson"
+          }
+        }
+      },
+      "remaining_instruction_time": {
+        "name": "Remaining teaching time",
+        "state_attributes": {
+          "verbleibende_stunden": {
+            "name": "Remaining lessons"
+          },
+          "schulschluss": {
+            "name": "School ends"
+          },
+          "bis_schulschluss_minuten": {
+            "name": "Minutes until school ends"
+          },
+          "pausen_nicht_mitgerechnet": {
+            "name": "Breaks excluded"
+          }
+        }
+      },
+      "school_day_progress": {
+        "name": "School day progress",
+        "state_attributes": {
+          "schulfrei": {
+            "name": "No school"
+          },
+          "schulbeginn": {
+            "name": "School starts"
+          },
+          "schulschluss": {
+            "name": "School ends"
+          },
+          "vergangen_minuten": {
+            "name": "Elapsed minutes"
+          },
+          "gesamt_minuten": {
+            "name": "Total minutes"
+          },
+          "inklusive_pausen": {
+            "name": "Includes breaks"
+          }
+        }
+      },
+      "instruction_progress": {
+        "name": "Teaching progress",
+        "state_attributes": {
+          "schulfrei": {
+            "name": "No school"
+          },
+          "unterricht_minuten_absolviert": {
+            "name": "Teaching minutes completed"
+          },
+          "unterricht_minuten_gesamt": {
+            "name": "Total teaching minutes"
+          },
+          "unterricht_minuten_verbleibend": {
+            "name": "Remaining teaching minutes"
+          },
+          "pausen_nicht_mitgerechnet": {
+            "name": "Breaks excluded"
+          }
+        }
+      },
+      "today_changes": {
+        "name": "Changes today",
+        "unit_of_measurement": "changes",
+        "state_attributes": {
+          "termine": {
+            "name": "Changed lessons"
+          }
+        }
+      },
+      "data_status": {
+        "name": "Data status",
+        "state": {
+          "live": "Live",
+          "cache": "Cache (current)",
+          "stale_cache": "Cache (stale)",
+          "unavailable": "Unavailable"
+        },
+        "state_attributes": {
+          "datenquelle": {
+            "name": "Data source"
+          },
+          "cache_alter_minuten": {
+            "name": "Cache age in minutes"
+          },
+          "cache_wochen": {
+            "name": "Cached weeks"
+          },
+          "letzter_abrufversuch": {
+            "name": "Last refresh attempt"
+          },
+          "letzter_fehler": {
+            "name": "Last error"
+          },
+          "letzter_fehler_zeitpunkt": {
+            "name": "Last error time"
+          },
+          "aufeinanderfolgende_fehler": {
+            "name": "Consecutive errors"
+          }
+        }
+      },
+      "last_successful_fetch": {
+        "name": "Last successful update"
+      },
+      "cached_weeks": {
+        "name": "Cached weeks",
+        "unit_of_measurement": "weeks",
+        "state_attributes": {
+          "wochen": {
+            "name": "Weeks"
+          }
+        }
+      }
+    },
+    "binary_sensor": {
+      "today_has_changes": {
+        "name": "Timetable change today",
+        "state_attributes": {
+          "anzahl": {
+            "name": "Count"
+          },
+          "faecher": {
+            "name": "Subjects"
+          }
+        }
+      },
+      "school_free_today": {
+        "name": "No school today",
+        "state_attributes": {
+          "geplante_ausgefallene_stunden": {
+            "name": "Scheduled cancelled lessons"
+          },
+          "grund": {
+            "name": "Reason",
+            "state": {
+              "no_active_lessons": "No active lessons in the public timetable"
+            }
+          }
+        }
+      },
+      "school_free_tomorrow": {
+        "name": "No school tomorrow",
+        "state_attributes": {
+          "geplante_ausgefallene_stunden": {
+            "name": "Scheduled cancelled lessons"
+          },
+          "grund": {
+            "name": "Reason",
+            "state": {
+              "no_active_lessons": "No active lessons in the public timetable"
+            }
+          }
+        }
+      },
+      "lesson_running": {
+        "name": "Lesson in progress",
+        "state_attributes": {
+          "faecher": {
+            "name": "Subjects"
+          },
+          "beginn": {
+            "name": "Start"
+          },
+          "ende": {
+            "name": "End"
+          }
+        }
+      }
+    }
+  },
+  "common": {
+    "calendar": {
+      "lesson": "Lesson",
+      "cancelled_summary": "{summary} (cancelled)",
+      "class_line": "Class: {value}",
+      "teacher_line": "Teacher: {value}",
+      "room_line": "Room: {value}",
+      "subject_change": "Subject change: {old} → {new}",
+      "teacher_change": "Substitution: {old} → {new}",
+      "room_change": "Room change: {old} → {new}",
+      "status_line": "Status: {value}",
+      "text_line": "{label}: {value}",
+      "status": {
+        "cancelled": "Cancelled",
+        "additional": "Additional lesson",
+        "changed": "Changed"
+      },
+      "text": {
+        "lesson_info": "Lesson",
+        "substitution": "Substitution",
+        "info": "Info"
+      }
+    }
+  }
+}
