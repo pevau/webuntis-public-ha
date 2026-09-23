@@ -5,7 +5,7 @@ from typing import Any
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import PERCENTAGE, UnitOfTime
+from homeassistant.const import PERCENTAGE
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -22,7 +22,6 @@ from .schedule import (
     next_slot,
     instruction_elapsed_seconds,
     instruction_total_seconds,
-    remaining_instruction_minutes,
     school_status,
     slot_changed,
     slot_rooms,
@@ -47,19 +46,10 @@ async def async_setup_entry(
                 WebUntisSchoolStatusSensor(entry, coordinator),
                 WebUntisTodayStartSensor(entry, coordinator),
                 WebUntisTodayEndSensor(entry, coordinator),
-                WebUntisTomorrowStartSensor(entry, coordinator),
-                WebUntisTomorrowEndSensor(entry, coordinator),
                 WebUntisNextSchoolDaySensor(entry, coordinator),
                 WebUntisNextSchoolDaySummarySensor(entry, coordinator),
-                WebUntisNextSchoolDayStartSensor(entry, coordinator),
-                WebUntisNextSchoolDayEndSensor(entry, coordinator),
-                WebUntisTodayLessonCountSensor(entry, coordinator),
-                WebUntisRemainingLessonsSensor(entry, coordinator),
-                WebUntisRemainingInstructionTimeSensor(entry, coordinator),
                 WebUntisSchoolDayProgressSensor(entry, coordinator),
                 WebUntisInstructionProgressSensor(entry, coordinator),
-                WebUntisTodayChangesSensor(entry, coordinator),
-                WebUntisCancelledLessonsTodaySensor(entry, coordinator),
                 WebUntisDailySummarySensor(entry, coordinator),
                 WebUntisDataStatusSensor(entry, coordinator),
                 WebUntisLastSuccessfulFetchSensor(entry, coordinator),
@@ -279,25 +269,6 @@ class WebUntisTodayEndSensor(_DayBoundarySensor):
         super().__init__(entry, coordinator, "today_end")
 
 
-class WebUntisTomorrowStartSensor(_DayBoundarySensor):
-    _attr_translation_key = "tomorrow_start"
-    _attr_icon = "mdi:clock-start"
-    day_offset = 1
-
-    def __init__(self, entry: ConfigEntry, coordinator: WebUntisPublicCoordinator) -> None:
-        super().__init__(entry, coordinator, "tomorrow_start")
-
-
-class WebUntisTomorrowEndSensor(_DayBoundarySensor):
-    _attr_translation_key = "tomorrow_end"
-    _attr_icon = "mdi:clock-end"
-    day_offset = 1
-    use_end = True
-
-    def __init__(self, entry: ConfigEntry, coordinator: WebUntisPublicCoordinator) -> None:
-        super().__init__(entry, coordinator, "tomorrow_end")
-
-
 class WebUntisNextSchoolDaySensor(_WebUntisSensorBase):
     _attr_translation_key = "next_school_day"
     _attr_icon = "mdi:calendar-arrow-right"
@@ -408,107 +379,6 @@ class WebUntisNextSchoolDaySummarySensor(_WebUntisSensorBase):
         }
 
 
-class _NextSchoolDayBoundarySensor(_WebUntisSensorBase):
-    _attr_device_class = SensorDeviceClass.TIMESTAMP
-    _time_sensitive = True
-    use_end = False
-
-    @property
-    def native_value(self) -> datetime | None:
-        result = self._next_school_day_slots()
-        if result is None:
-            return None
-        _offset, slots = result
-        if self.use_end:
-            return max(slot[1] for slot in slots)
-        return min(slot[0] for slot in slots)
-
-
-class WebUntisNextSchoolDayStartSensor(_NextSchoolDayBoundarySensor):
-    _attr_translation_key = "next_school_day_start"
-    _attr_icon = "mdi:clock-start"
-
-    def __init__(self, entry: ConfigEntry, coordinator: WebUntisPublicCoordinator) -> None:
-        super().__init__(entry, coordinator, "next_school_day_start")
-
-
-class WebUntisNextSchoolDayEndSensor(_NextSchoolDayBoundarySensor):
-    _attr_translation_key = "next_school_day_end"
-    _attr_icon = "mdi:clock-end"
-    use_end = True
-
-    def __init__(self, entry: ConfigEntry, coordinator: WebUntisPublicCoordinator) -> None:
-        super().__init__(entry, coordinator, "next_school_day_end")
-
-
-class WebUntisTodayLessonCountSensor(_WebUntisSensorBase):
-    _attr_translation_key = "today_lesson_count"
-    _attr_icon = "mdi:counter"
-
-    def __init__(self, entry: ConfigEntry, coordinator: WebUntisPublicCoordinator) -> None:
-        super().__init__(entry, coordinator, "today_lesson_count")
-
-    @property
-    def native_value(self) -> int:
-        return len(unique_slots(self._lessons_today()))
-
-
-class WebUntisRemainingLessonsSensor(_WebUntisSensorBase):
-    _attr_translation_key = "remaining_lessons_today"
-    _attr_icon = "mdi:book-clock"
-    _attr_native_unit_of_measurement = "Stunden"
-    _time_sensitive = True
-
-    def __init__(self, entry: ConfigEntry, coordinator: WebUntisPublicCoordinator) -> None:
-        super().__init__(entry, coordinator, "remaining_lessons_today")
-
-    @property
-    def native_value(self) -> int:
-        now = local_now(self.hass)
-        return len([slot for slot in unique_slots(self._lessons_today()) if slot[1] > now])
-
-    @property
-    def extra_state_attributes(self) -> dict[str, Any]:
-        now = local_now(self.hass)
-        remaining = [slot for slot in unique_slots(self._lessons_today()) if slot[1] > now]
-        return {
-            "faecher": [slot_subjects(slot) for slot in remaining],
-            "inklusive_aktuelle_stunde": any(slot[0] <= now < slot[1] for slot in remaining),
-        }
-
-
-class WebUntisRemainingInstructionTimeSensor(_WebUntisSensorBase):
-    _attr_translation_key = "remaining_instruction_time"
-    _attr_icon = "mdi:timer-sand"
-    _attr_device_class = SensorDeviceClass.DURATION
-    _attr_native_unit_of_measurement = UnitOfTime.MINUTES
-    _time_sensitive = True
-
-    def __init__(self, entry: ConfigEntry, coordinator: WebUntisPublicCoordinator) -> None:
-        super().__init__(entry, coordinator, "remaining_instruction_time")
-
-    @property
-    def native_value(self) -> int:
-        return remaining_instruction_minutes(self._lessons_today(), local_now(self.hass))
-
-    @property
-    def extra_state_attributes(self) -> dict[str, Any]:
-        now = local_now(self.hass)
-        slots = unique_slots(self._lessons_today())
-        future = [slot for slot in slots if slot[1] > now]
-        school_end = max((slot[1] for slot in slots), default=None)
-        return {
-            "verbleibende_stunden": len(future),
-            "schulschluss": school_end.isoformat() if school_end else None,
-            "bis_schulschluss_minuten": (
-                max(0, int((school_end - now).total_seconds() // 60))
-                if school_end and school_end > now
-                else 0
-            ),
-            "pausen_nicht_mitgerechnet": True,
-        }
-
-
 class WebUntisSchoolDayProgressSensor(_WebUntisSensorBase):
     _attr_translation_key = "school_day_progress"
     _attr_icon = "mdi:progress-clock"
@@ -600,64 +470,6 @@ class WebUntisInstructionProgressSensor(_WebUntisSensorBase):
             "unterricht_minuten_gesamt": total_minutes,
             "unterricht_minuten_verbleibend": max(0, total_minutes - elapsed_minutes),
             "pausen_nicht_mitgerechnet": True,
-        }
-
-
-class WebUntisTodayChangesSensor(_WebUntisSensorBase):
-    _attr_translation_key = "today_changes"
-    _attr_icon = "mdi:calendar-alert"
-
-    def __init__(self, entry: ConfigEntry, coordinator: WebUntisPublicCoordinator) -> None:
-        super().__init__(entry, coordinator, "today_changes")
-
-    @property
-    def native_value(self) -> int:
-        return len([lesson for lesson in self._lessons_today() if lesson.changed])
-
-    @property
-    def extra_state_attributes(self) -> dict[str, Any]:
-        changed = [lesson for lesson in self._lessons_today() if lesson.changed]
-        return {
-            "termine": [
-                {
-                    "fach": lesson.subject,
-                    "beginn": lesson.start.isoformat(),
-                    "ende": lesson.end.isoformat(),
-                    "status": lesson.status_label,
-                    "raum": lesson.room,
-                    "lehrer": lesson.teacher,
-                }
-                for lesson in changed
-            ]
-        }
-
-
-
-class WebUntisCancelledLessonsTodaySensor(_WebUntisSensorBase):
-    _attr_translation_key = "cancelled_lessons_today"
-    _attr_icon = "mdi:calendar-remove-outline"
-
-    def __init__(self, entry: ConfigEntry, coordinator: WebUntisPublicCoordinator) -> None:
-        super().__init__(entry, coordinator, "cancelled_lessons_today")
-
-    def _cancelled(self) -> list[WebUntisLesson]:
-        return [lesson for lesson in self._lessons_today() if lesson.cancelled]
-
-    @property
-    def native_value(self) -> int:
-        return len(self._cancelled())
-
-    @property
-    def extra_state_attributes(self) -> dict[str, Any]:
-        return {
-            "termine": [
-                {
-                    "fach": lesson.subject,
-                    "beginn": lesson.start.isoformat(),
-                    "ende": lesson.end.isoformat(),
-                }
-                for lesson in self._cancelled()
-            ]
         }
 
 
