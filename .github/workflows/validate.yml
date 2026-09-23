@@ -1,0 +1,53 @@
+name: Validate
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Validate JSON files
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          files = [
+              Path("hacs.json"),
+              Path("custom_components/webuntis_public/manifest.json"),
+              Path("custom_components/webuntis_public/strings.json"),
+              Path("custom_components/webuntis_public/translations/de.json"),
+          ]
+          for file in files:
+              json.loads(file.read_text(encoding="utf-8"))
+              print(f"OK: {file}")
+          PY
+
+      - name: Compile Python files
+        shell: bash
+        run: |
+          python -m compileall -q custom_components/webuntis_public
+
+      - name: Check HACS structure
+        shell: bash
+        run: |
+          test -f hacs.json
+          test -f custom_components/webuntis_public/manifest.json
+          test -f custom_components/webuntis_public/__init__.py
+          test -f custom_components/webuntis_public/config_flow.py
