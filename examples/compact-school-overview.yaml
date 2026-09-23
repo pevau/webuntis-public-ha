@@ -9,14 +9,14 @@ content: >-
 
   ## 🎓 Schule
 
-  {% if state_attr(today, 'schulfrei') %}
+  {% if state_attr(today, 'school_free') %}
 
   ### 🏠 Heute schulfrei
 
   {% else %}
 
-  {% set beginn = state_attr(today, 'schulbeginn') %}
-  {% set ende = state_attr(today, 'schulschluss') %}
+  {% set beginn = state_attr(today, 'school_start_time') %}
+  {% set ende = state_attr(today, 'school_end_time') %}
 
   ### 📚 Heute
 
@@ -28,40 +28,40 @@ content: >-
   ⏰ Unterricht beginnt um **{{ as_datetime(beginn).strftime('%H:%M') }} Uhr**
 
   {% elif states(status) == 'lesson' %}
-  🎓 Aktuell: **{{ state_attr(today, 'aktuelle_stunde') }}**
-  {% if state_attr(today, 'naechste_stunde') %}
-  · danach **{{ state_attr(today, 'naechste_stunde') }}**
+  🎓 Aktuell: **{{ state_attr(today, 'current_lesson') }}**
+  {% if state_attr(today, 'next_lesson') %}
+  · danach **{{ state_attr(today, 'next_lesson') }}**
   {% endif %}
 
   {% elif states(status) == 'break' %}
   ☕ **Pause**
-  {% if state_attr(today, 'naechste_stunde') %}
-  · danach **{{ state_attr(today, 'naechste_stunde') }}**
-  um {{ as_datetime(state_attr(today, 'naechste_stunde_beginn')).strftime('%H:%M') }} Uhr
+  {% if state_attr(today, 'next_lesson') %}
+  · danach **{{ state_attr(today, 'next_lesson') }}**
+  um {{ as_datetime(state_attr(today, 'next_lesson_start_time')).strftime('%H:%M') }} Uhr
   {% endif %}
 
   {% elif states(status) == 'after_school' %}
   🏠 **Schule beendet**
   {% endif %}
 
-  {% set ausfaelle = state_attr(today, 'ausfaelle') | int(0) %}
-  {% set aenderungen = state_attr(today, 'aenderungen') | int(0) %}
+  {% set ausfaelle = state_attr(today, 'cancellations') | int(0) %}
+  {% set aenderungen = state_attr(today, 'changes') | int(0) %}
 
   {% if ausfaelle > 0 %}
   🔴 **{{ ausfaelle }} {{ 'Ausfall' if ausfaelle == 1 else 'Ausfälle' }}:**
-  {{ (state_attr(today, 'ausgefallene_faecher') or []) | join(', ') }}
+  {{ (state_attr(today, 'cancelled_subjects') or []) | join(', ') }}
   {% endif %}
 
   {% if aenderungen > 0 %}
   🟠 **{{ aenderungen }} {{ 'Änderung' if aenderungen == 1 else 'Änderungen' }}:**
-  {{ (state_attr(today, 'geaenderte_faecher') or []) | join(', ') }}
+  {{ (state_attr(today, 'changed_subjects') or []) | join(', ') }}
   {% endif %}
 
   {% endif %}
 
   ---
 
-  {% set datum = state_attr(next, 'datum') %}
+  {% set datum = state_attr(next, 'date') %}
 
   {% if datum %}
   {% set d = strptime(datum, '%Y-%m-%d') %}
@@ -74,11 +74,11 @@ content: >-
 
   **{{ weekdays[d.weekday()] }}, {{ d.strftime('%d.%m.%Y') }}**
 
-  🕒 {{ as_datetime(state_attr(next, 'schulbeginn')).strftime('%H:%M') }}
-  – {{ as_datetime(state_attr(next, 'schulschluss')).strftime('%H:%M') }} Uhr
+  🕒 {{ as_datetime(state_attr(next, 'school_start_time')).strftime('%H:%M') }}
+  – {{ as_datetime(state_attr(next, 'school_end_time')).strftime('%H:%M') }} Uhr
   · **{{ states(next) }} Stunden**
 
-  📖 {{ (state_attr(next, 'faecher') or []) | join(' · ') }}
+  📖 {{ (state_attr(next, 'subjects') or []) | join(' · ') }}
 
   {% else %}
 
