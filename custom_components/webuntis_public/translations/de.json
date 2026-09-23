@@ -502,6 +502,40 @@
       "refresh_timetable": {
         "name": "Stundenplan aktualisieren"
       }
+    },
+    "event": {
+      "timetable_change": {
+        "name": "Stundenplan geändert",
+        "state_attributes": {
+          "detected_at": {
+            "name": "Erkannt am"
+          },
+          "week": {
+            "name": "Woche"
+          },
+          "class_name": {
+            "name": "Klasse"
+          },
+          "added_count": {
+            "name": "Hinzugefügt"
+          },
+          "removed_count": {
+            "name": "Entfernt"
+          },
+          "change_count": {
+            "name": "Änderungen"
+          },
+          "added": {
+            "name": "Hinzugefügte Stunden"
+          },
+          "removed": {
+            "name": "Entfernte Stunden"
+          },
+          "truncated": {
+            "name": "Liste gekürzt"
+          }
+        }
+      }
     }
   },
   "common": {

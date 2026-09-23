@@ -48,4 +48,4 @@ class WebUntisRefreshButton(
 
     async def async_press(self) -> None:
         """Request an immediate timetable refresh."""
-        await self.coordinator.async_request_refresh()
+        await self.coordinator.async_force_refresh()

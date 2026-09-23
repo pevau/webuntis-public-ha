@@ -79,6 +79,10 @@ class WebUntisPublicCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._last_error: str | None = None
         self._last_error_at: datetime | None = None
         self._consecutive_failures = 0
+        self._force_refresh = False
+        self._timetable_change_sequence = 0
+        self._last_timetable_change: dict[str, Any] | None = None
+        self._timetable_change_history: list[dict[str, Any]] = []
 
     @property
     def device_identifier(self) -> str:
@@ -99,6 +103,24 @@ class WebUntisPublicCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     @property
     def data_source(self) -> str:
         return self._data_source
+
+    @property
+    def timetable_change_sequence(self) -> int:
+        """Return an incrementing sequence for detected timetable changes."""
+        return self._timetable_change_sequence
+
+    @property
+    def last_timetable_change(self) -> dict[str, Any] | None:
+        """Return the last detected semantic timetable change."""
+        return self._last_timetable_change
+
+    def timetable_changes_since(self, sequence: int) -> list[dict[str, Any]]:
+        """Return recent timetable changes newer than the supplied sequence."""
+        return [
+            change
+            for change in self._timetable_change_history
+            if int(change.get("sequence", 0)) > sequence
+        ]
 
     @property
     def last_successful_fetch(self) -> datetime | None:
@@ -205,6 +227,14 @@ class WebUntisPublicCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         return self._snapshot()
 
+    async def async_force_refresh(self) -> None:
+        """Refresh all coordinator weeks from WebUntis, bypassing cache TTL once."""
+        self._force_refresh = True
+        try:
+            await self.async_request_refresh()
+        finally:
+            self._force_refresh = False
+
     async def async_get_lessons(
         self, start_date: datetime, end_date: datetime
     ) -> list[WebUntisLesson]:
@@ -301,7 +331,11 @@ class WebUntisPublicCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     ) -> tuple[bool, str, str | None]:
         key = monday.isoformat()
         cached = self._weeks.get(key)
-        if cached and not self._is_stale(monday, cached["fetched_at"]):
+        if (
+            cached
+            and not self._force_refresh
+            and not self._is_stale(monday, cached["fetched_at"])
+        ):
             return False, "cache", None
 
         stale_entries = cached["entries"] if cached else None
@@ -326,10 +360,29 @@ class WebUntisPublicCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 )
                 await asyncio.sleep(delay)
             else:
+                timetable_change = self._detect_timetable_change(
+                    monday,
+                    stale_entries,
+                    entries,
+                )
                 self._weeks[key] = {
                     "fetched_at": datetime.now(timezone.utc),
                     "entries": entries,
                 }
+                if timetable_change:
+                    self._timetable_change_sequence += 1
+                    timetable_change["sequence"] = self._timetable_change_sequence
+                    self._last_timetable_change = timetable_change
+                    self._timetable_change_history.append(timetable_change)
+                    self._timetable_change_history = self._timetable_change_history[-20:]
+                    _LOGGER.info(
+                        "Detected WebUntis timetable change for class %s in week %s: "
+                        "%d added, %d removed",
+                        self.class_name,
+                        key,
+                        timetable_change["added_count"],
+                        timetable_change["removed_count"],
+                    )
                 if attempt:
                     _LOGGER.info(
                         "WebUntis request for week %s succeeded after %d retry/retries",
@@ -391,6 +444,107 @@ class WebUntisPublicCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         _LOGGER.debug("Fetched %d WebUntis entries for week %s", len(entries), monday)
         return entries
+
+    def _detect_timetable_change(
+        self,
+        monday: Date,
+        old_entries: list[dict[str, Any]] | None,
+        new_entries: list[dict[str, Any]],
+    ) -> dict[str, Any] | None:
+        """Compare semantic lesson data and return future-relevant differences."""
+        if old_entries is None:
+            return None
+
+        tz = dt_util.get_time_zone(self.hass.config.time_zone) or dt_util.DEFAULT_TIME_ZONE
+        start_local = datetime(
+            monday.year,
+            monday.month,
+            monday.day,
+            tzinfo=tz,
+        )
+        end_local = start_local + timedelta(days=7)
+        now_local = dt_util.now().astimezone(tz)
+
+        old_lessons = [
+            lesson
+            for lesson in parse_lessons(
+                old_entries,
+                start_local,
+                end_local,
+                tz,
+            )
+            if lesson.end > now_local
+        ]
+        new_lessons = [
+            lesson
+            for lesson in parse_lessons(
+                new_entries,
+                start_local,
+                end_local,
+                tz,
+            )
+            if lesson.end > now_local
+        ]
+
+        old_map = {
+            self._lesson_fingerprint(lesson): lesson
+            for lesson in old_lessons
+        }
+        new_map = {
+            self._lesson_fingerprint(lesson): lesson
+            for lesson in new_lessons
+        }
+
+        added_keys = sorted(new_map.keys() - old_map.keys())
+        removed_keys = sorted(old_map.keys() - new_map.keys())
+        if not added_keys and not removed_keys:
+            return None
+
+        return {
+            "detected_at": datetime.now(timezone.utc).isoformat(),
+            "week": monday.isoformat(),
+            "class_name": self.class_name,
+            "added_count": len(added_keys),
+            "removed_count": len(removed_keys),
+            "change_count": len(added_keys) + len(removed_keys),
+            "added": [
+                self._lesson_event_data(new_map[key])
+                for key in added_keys[:20]
+            ],
+            "removed": [
+                self._lesson_event_data(old_map[key])
+                for key in removed_keys[:20]
+            ],
+            "truncated": len(added_keys) > 20 or len(removed_keys) > 20,
+        }
+
+    @staticmethod
+    def _lesson_fingerprint(lesson: WebUntisLesson) -> tuple[Any, ...]:
+        """Return a stable semantic fingerprint, ignoring technical duplicates."""
+        return (
+            lesson.start.isoformat(),
+            lesson.end.isoformat(),
+            lesson.status,
+            lesson.subjects,
+            lesson.old_subjects,
+            lesson.teachers,
+            lesson.old_teachers,
+            lesson.rooms,
+            lesson.old_rooms,
+            lesson.texts,
+        )
+
+    @staticmethod
+    def _lesson_event_data(lesson: WebUntisLesson) -> dict[str, Any]:
+        """Return compact JSON-serialisable lesson data for the event entity."""
+        return {
+            "start": lesson.start.isoformat(),
+            "end": lesson.end.isoformat(),
+            "subject": lesson.subject,
+            "status": lesson.status_label or "regular",
+            "teacher": lesson.teacher,
+            "room": lesson.room,
+        }
 
     def _is_stale(self, monday: Date, fetched_at: datetime) -> bool:
         now = datetime.now(timezone.utc)
