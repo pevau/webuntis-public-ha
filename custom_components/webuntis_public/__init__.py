@@ -5,6 +5,7 @@ from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import entity_registry as er
 
 from .const import (
     CONF_CLASS_ID,
@@ -15,7 +16,51 @@ from .const import (
 )
 from .coordinator import WebUntisPublicCoordinator
 
-PLATFORMS = ["calendar", "sensor", "binary_sensor", "button", "event"]
+PLATFORMS = ["calendar", "sensor", "button", "event"]
+
+
+OBSOLETE_ENTITY_KEYS = {
+    "tomorrow_start",
+    "tomorrow_end",
+    "next_school_day_start",
+    "next_school_day_end",
+    "today_lesson_count",
+    "remaining_lessons_today",
+    "remaining_instruction_time",
+    "today_changes",
+    "cancelled_lessons_today",
+    "today_start",
+    "today_end",
+    "instruction_progress",
+    "today_has_changes",
+    "school_free_today",
+    "school_free_tomorrow",
+    "lesson_running",
+    "school_starts_later_today",
+    "school_ends_earlier_today",
+    "first_lesson_cancelled_today",
+    "last_lesson_cancelled_today",
+}
+
+
+def _remove_obsolete_entities(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    coordinators: list[WebUntisPublicCoordinator],
+) -> None:
+    """Remove entity-registry entries replaced by the compact entity model."""
+    registry = er.async_get(hass)
+    obsolete_unique_ids = {
+        f"{coordinator.device_identifier}-{key}"
+        for coordinator in coordinators
+        for key in OBSOLETE_ENTITY_KEYS
+    }
+    for entity in list(registry.entities.values()):
+        if (
+            entity.config_entry_id == entry.entry_id
+            and entity.unique_id in obsolete_unique_ids
+        ):
+            registry.async_remove(entity.entity_id)
 
 
 def _configured_classes(entry: ConfigEntry) -> list[tuple[int, str]]:
@@ -69,6 +114,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     ]
     await asyncio.gather(*(coordinator.async_config_entry_first_refresh() for coordinator in coordinators))
     entry.runtime_data = coordinators
+    _remove_obsolete_entities(hass, entry, coordinators)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True
 
