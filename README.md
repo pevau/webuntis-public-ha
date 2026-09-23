@@ -1,5 +1,12 @@
 # WebUntis Public Timetable for Home Assistant
 
+[![HACS](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/custom-components/hacs)
+[![Version](https://img.shields.io/github/v/release/pevau/webuntis-public-ha)](https://github.com/pevau/webuntis-public-ha/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/pevau/webuntis-public-ha/total)](https://tooomm.github.io/github-release-stats/?username=pevau&repository=webuntis-public-ha)
+![HACS Installations](https://img.shields.io/badge/dynamic/json?color=41BDF5&logo=home-assistant&label=integration%20installations&suffix=%20installs&cacheSeconds=15600&url=https%3A%2F%2Fanalytics.home-assistant.io%2Fcustom_integrations.json&query=%24.webuntis_public.total)
+[![Latest Release](https://img.shields.io/github/release-date/pevau/webuntis-public-ha?style=flat&label=Latest%20Release)](https://github.com/pevau/webuntis-public-ha/releases)
+[![Open Issues](https://img.shields.io/github/issues/pevau/webuntis-public-ha?style=flat&label=Open%20Issues)](https://github.com/pevau/webuntis-public-ha/issues)
+
 Custom integration for Home Assistant that imports public WebUntis timetables without a WebUntis login.
 
 ## Features
@@ -51,3 +58,9 @@ When installed through HACS, updates can be installed directly from HACS. After 
 ## Notes
 
 This is an independent community integration and is not affiliated with Untis GmbH.
+
+## Support
+
+<a href="https://buymeacoffee.com/pevau">
+  <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="50">
+</a>
