@@ -2,6 +2,19 @@
 
 All notable changes to **WebUntis Public Timetable** are documented here.
 
+## [0.7.8] - 2026-09-23
+
+### Added
+
+- Added a Home Assistant event entity that fires only when the semantic timetable actually changes between two WebUntis fetches.
+- Change detection ignores technical duplicate-count differences and compares lesson time, status, subject, teacher, room and WebUntis change text.
+- Only lessons that have not already ended are considered, preventing irrelevant changes to historical timetable data from creating events.
+- Event data includes the affected week, counts and compact lists of added and removed lessons, making the entity suitable for Home Assistant automations and notifications.
+
+### Fixed
+
+- The manual refresh button now bypasses the coordinator cache TTL once and performs a real WebUntis refresh immediately.
+
 ## [0.7.7] - 2026-09-23
 
 ### Added
