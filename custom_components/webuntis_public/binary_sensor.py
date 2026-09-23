@@ -71,7 +71,7 @@ class _WebUntisBinaryBase(
 
 
 class WebUntisTodayChangesBinarySensor(_WebUntisBinaryBase):
-    _attr_name = "Stundenplanänderung heute"
+    _attr_translation_key = "today_has_changes"
     _attr_icon = "mdi:calendar-alert"
 
     def __init__(
@@ -110,16 +110,12 @@ class _SchoolFreeBinarySensor(_WebUntisBinaryBase):
             "geplante_ausgefallene_stunden": len(
                 {(lesson.start, lesson.end) for lesson in cancelled}
             ),
-            "grund": (
-                "Keine stattfindenden Unterrichtsstunden im öffentlichen Stundenplan"
-                if self.is_on
-                else None
-            ),
+            "grund": "no_active_lessons" if self.is_on else None,
         }
 
 
 class WebUntisSchoolFreeTodayBinarySensor(_SchoolFreeBinarySensor):
-    _attr_name = "Schulfrei heute"
+    _attr_translation_key = "school_free_today"
     _attr_icon = "mdi:calendar-remove"
 
     def __init__(
@@ -129,7 +125,7 @@ class WebUntisSchoolFreeTodayBinarySensor(_SchoolFreeBinarySensor):
 
 
 class WebUntisSchoolFreeTomorrowBinarySensor(_SchoolFreeBinarySensor):
-    _attr_name = "Schulfrei morgen"
+    _attr_translation_key = "school_free_tomorrow"
     _attr_icon = "mdi:calendar-remove-outline"
     day_offset = 1
 
@@ -140,7 +136,7 @@ class WebUntisSchoolFreeTomorrowBinarySensor(_SchoolFreeBinarySensor):
 
 
 class WebUntisLessonRunningBinarySensor(_WebUntisBinaryBase):
-    _attr_name = "Unterricht läuft"
+    _attr_translation_key = "lesson_running"
     _attr_icon = "mdi:school"
     _time_sensitive = True
 
