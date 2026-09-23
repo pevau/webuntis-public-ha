@@ -36,11 +36,7 @@ from .const import (
     CONF_SCHOOL_RESULT,
     CONF_SEARCH_QUERY,
     CONF_SERVER,
-    CONF_SETUP_METHOD,
     DOMAIN,
-    METHOD_MANUAL,
-    METHOD_PUBLIC_LINK,
-    METHOD_SEARCH,
     OPT_NEXT_LESSON_DAYS,
     OPT_SHOW_CANCELLED,
     OPT_SHOW_CLASS,
@@ -168,27 +164,10 @@ class WebUntisPublicConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._preselected_class_id: str | None = None
 
     async def async_step_user(self, user_input=None):
-        if user_input is not None:
-            method = user_input[CONF_SETUP_METHOD]
-            if method == METHOD_SEARCH:
-                return await self.async_step_school_search()
-            if method == METHOD_PUBLIC_LINK:
-                return await self.async_step_public_link()
-            return await self.async_step_manual()
-
-        return self.async_show_form(
+        """Choose how the public timetable should be configured."""
+        return self.async_show_menu(
             step_id="user",
-            data_schema=vol.Schema(
-                {
-                    vol.Required(CONF_SETUP_METHOD, default=METHOD_SEARCH): vol.In(
-                        {
-                            METHOD_SEARCH: "Schule suchen",
-                            METHOD_PUBLIC_LINK: "Öffentlichen WebUntis-Link verwenden",
-                            METHOD_MANUAL: "Server und Schule manuell eingeben",
-                        }
-                    )
-                }
-            ),
+            menu_options=["school_search", "public_link", "manual"],
         )
 
     async def async_step_school_search(self, user_input=None):
@@ -212,7 +191,7 @@ class WebUntisPublicConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return self.async_show_form(
             step_id="school_search",
             data_schema=vol.Schema(
-                {vol.Required(CONF_SEARCH_QUERY, default="Wirtschaftsschule Kempten"): str}
+                {vol.Required(CONF_SEARCH_QUERY): str}
             ),
             errors=errors,
         )
@@ -456,13 +435,16 @@ class WebUntisPublicOptionsFlow(config_entries.OptionsFlowWithReload):
                 vol.Required(
                     OPT_TITLE_FORMAT,
                     default=current.get(OPT_TITLE_FORMAT, DEFAULT_TITLE_FORMAT),
-                ): vol.In(
-                    {
-                        TITLE_SUBJECT: "Nur Fach",
-                        TITLE_SUBJECT_ROOM: "Fach · Raum",
-                        TITLE_SUBJECT_TEACHER: "Fach · Lehrer",
-                        TITLE_SUBJECT_ROOM_TEACHER: "Fach · Raum · Lehrer",
-                    }
+                ): SelectSelector(
+                    SelectSelectorConfig(
+                        options=[
+                            TITLE_SUBJECT,
+                            TITLE_SUBJECT_ROOM,
+                            TITLE_SUBJECT_TEACHER,
+                            TITLE_SUBJECT_ROOM_TEACHER,
+                        ],
+                        translation_key="title_format",
+                    )
                 ),
                 vol.Required(
                     OPT_SHOW_CANCELLED,
@@ -489,7 +471,6 @@ class WebUntisPublicOptionsFlow(config_entries.OptionsFlowWithReload):
                         max=30,
                         step=1,
                         mode=NumberSelectorMode.BOX,
-                        unit_of_measurement="Tage",
                     )
                 ),
             }
