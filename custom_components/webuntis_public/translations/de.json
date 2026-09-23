@@ -412,6 +412,48 @@
             "name": "Verbleibende Stunden"
           }
         }
+      },
+      "next_school_day_summary": {
+        "name": "Zusammenfassung nächster Schultag",
+        "unit_of_measurement": "Stunden",
+        "state_attributes": {
+          "datum": {
+            "name": "Datum"
+          },
+          "tage_bis_dahin": {
+            "name": "Tage bis dahin"
+          },
+          "schulbeginn": {
+            "name": "Schulbeginn"
+          },
+          "schulschluss": {
+            "name": "Schulschluss"
+          },
+          "faecher": {
+            "name": "Fächer"
+          },
+          "lehrer": {
+            "name": "Lehrer"
+          },
+          "raeume": {
+            "name": "Räume"
+          },
+          "aenderungen": {
+            "name": "Änderungen"
+          },
+          "geaenderte_faecher": {
+            "name": "Geänderte Fächer"
+          },
+          "ausfaelle": {
+            "name": "Ausfälle"
+          },
+          "ausgefallene_faecher": {
+            "name": "Ausgefallene Fächer"
+          },
+          "stundenplan": {
+            "name": "Stundenplan"
+          }
+        }
       }
     },
     "binary_sensor": {
