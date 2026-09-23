@@ -68,10 +68,6 @@ When installed through HACS, updates can be installed directly from HACS. After 
 
 Every release contains a short changelog which is also used as the GitHub/HACS release note. The full history is available in [CHANGELOG.md](CHANGELOG.md).
 
-## Current version
-
-`0.7.8`
-
 ## Notes
 
 This is an independent community integration and is not affiliated with Untis GmbH.
