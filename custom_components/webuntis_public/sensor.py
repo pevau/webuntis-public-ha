@@ -50,6 +50,7 @@ async def async_setup_entry(
                 WebUntisTomorrowStartSensor(entry, coordinator),
                 WebUntisTomorrowEndSensor(entry, coordinator),
                 WebUntisNextSchoolDaySensor(entry, coordinator),
+                WebUntisNextSchoolDaySummarySensor(entry, coordinator),
                 WebUntisNextSchoolDayStartSensor(entry, coordinator),
                 WebUntisNextSchoolDayEndSensor(entry, coordinator),
                 WebUntisTodayLessonCountSensor(entry, coordinator),
@@ -325,6 +326,85 @@ class WebUntisNextSchoolDaySensor(_WebUntisSensorBase):
             "schulschluss": max(slot[1] for slot in slots).isoformat(),
             "stunden": len(slots),
             "faecher": [slot_subjects(slot) for slot in slots],
+        }
+
+
+class WebUntisNextSchoolDaySummarySensor(_WebUntisSensorBase):
+    _attr_translation_key = "next_school_day_summary"
+    _attr_icon = "mdi:calendar-text-outline"
+    _time_sensitive = True
+
+    def __init__(self, entry: ConfigEntry, coordinator: WebUntisPublicCoordinator) -> None:
+        super().__init__(entry, coordinator, "next_school_day_summary")
+
+    def _values(self) -> dict[str, Any] | None:
+        result = self._next_school_day_slots()
+        if result is None:
+            return None
+
+        offset, slots = result
+        lessons = self._lessons_for_day(offset)
+        changed = [lesson for lesson in lessons if lesson.changed]
+        cancelled = [lesson for lesson in lessons if lesson.cancelled]
+
+        teachers: list[str] = []
+        rooms: list[str] = []
+        for slot in slots:
+            for lesson in slot[2]:
+                for teacher in lesson.teachers:
+                    if teacher and teacher not in teachers:
+                        teachers.append(teacher)
+                for room in lesson.rooms:
+                    if room and room not in rooms:
+                        rooms.append(room)
+
+        return {
+            "offset": offset,
+            "slots": slots,
+            "changed": changed,
+            "cancelled": cancelled,
+            "teachers": teachers,
+            "rooms": rooms,
+        }
+
+    @property
+    def native_value(self) -> int | None:
+        values = self._values()
+        return len(values["slots"]) if values is not None else None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        values = self._values()
+        if values is None:
+            return {}
+
+        slots = values["slots"]
+        changed = values["changed"]
+        cancelled = values["cancelled"]
+
+        return {
+            "datum": slots[0][0].date().isoformat(),
+            "tage_bis_dahin": values["offset"],
+            "schulbeginn": min(slot[0] for slot in slots).isoformat(),
+            "schulschluss": max(slot[1] for slot in slots).isoformat(),
+            "faecher": [slot_subjects(slot) for slot in slots],
+            "lehrer": values["teachers"],
+            "raeume": values["rooms"],
+            "aenderungen": len(changed),
+            "geaenderte_faecher": [lesson.subject for lesson in changed],
+            "ausfaelle": len(cancelled),
+            "ausgefallene_faecher": [lesson.subject for lesson in cancelled],
+            "stundenplan": [
+                {
+                    "beginn": slot[0].isoformat(),
+                    "ende": slot[1].isoformat(),
+                    "fach": slot_subjects(slot),
+                    "lehrer": slot_teachers(slot),
+                    "raum": slot_rooms(slot),
+                    "geaendert": slot_changed(slot),
+                }
+                for slot in slots
+            ],
         }
 
 
