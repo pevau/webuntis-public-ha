@@ -56,6 +56,7 @@ async def async_setup_entry(
                 WebUntisSchoolDayProgressSensor(entry, coordinator),
                 WebUntisInstructionProgressSensor(entry, coordinator),
                 WebUntisTodayChangesSensor(entry, coordinator),
+                WebUntisCancelledLessonsTodaySensor(entry, coordinator),
                 WebUntisDataStatusSensor(entry, coordinator),
                 WebUntisLastSuccessfulFetchSensor(entry, coordinator),
                 WebUntisCachedWeeksSensor(entry, coordinator),
@@ -486,6 +487,34 @@ class WebUntisTodayChangesSensor(_WebUntisSensorBase):
             ]
         }
 
+
+
+class WebUntisCancelledLessonsTodaySensor(_WebUntisSensorBase):
+    _attr_translation_key = "cancelled_lessons_today"
+    _attr_icon = "mdi:calendar-remove-outline"
+
+    def __init__(self, entry: ConfigEntry, coordinator: WebUntisPublicCoordinator) -> None:
+        super().__init__(entry, coordinator, "cancelled_lessons_today")
+
+    def _cancelled(self) -> list[WebUntisLesson]:
+        return [lesson for lesson in self._lessons_today() if lesson.cancelled]
+
+    @property
+    def native_value(self) -> int:
+        return len(self._cancelled())
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        return {
+            "termine": [
+                {
+                    "fach": lesson.subject,
+                    "beginn": lesson.start.isoformat(),
+                    "ende": lesson.end.isoformat(),
+                }
+                for lesson in self._cancelled()
+            ]
+        }
 
 
 class WebUntisDataStatusSensor(_WebUntisSensorBase):

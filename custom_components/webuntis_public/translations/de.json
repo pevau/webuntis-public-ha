@@ -325,6 +325,15 @@
       },
       "next_school_day_end": {
         "name": "Schulschluss nächster Schultag"
+      },
+      "cancelled_lessons_today": {
+        "name": "Ausfälle heute",
+        "unit_of_measurement": "Ausfälle",
+        "state_attributes": {
+          "termine": {
+            "name": "Ausgefallene Stunden"
+          }
+        }
       }
     },
     "binary_sensor": {
@@ -378,6 +387,68 @@
           },
           "ende": {
             "name": "Ende"
+          }
+        }
+      },
+      "school_starts_later_today": {
+        "name": "Späterer Schulbeginn heute",
+        "state_attributes": {
+          "planmaessiger_beginn": {
+            "name": "Planmäßiger Schulbeginn"
+          },
+          "tatsaechlicher_beginn": {
+            "name": "Tatsächlicher Schulbeginn"
+          },
+          "spaeter_um_minuten": {
+            "name": "Später um Minuten"
+          },
+          "ausgefallene_faecher_davor": {
+            "name": "Ausgefallene Fächer davor"
+          }
+        }
+      },
+      "school_ends_earlier_today": {
+        "name": "Früherer Schulschluss heute",
+        "state_attributes": {
+          "planmaessiger_schluss": {
+            "name": "Planmäßiger Schulschluss"
+          },
+          "tatsaechlicher_schluss": {
+            "name": "Tatsächlicher Schulschluss"
+          },
+          "frueher_um_minuten": {
+            "name": "Früher um Minuten"
+          },
+          "ausgefallene_faecher_danach": {
+            "name": "Ausgefallene Fächer danach"
+          }
+        }
+      },
+      "first_lesson_cancelled_today": {
+        "name": "Erste Stunde entfällt heute",
+        "state_attributes": {
+          "beginn": {
+            "name": "Beginn"
+          },
+          "ende": {
+            "name": "Ende"
+          },
+          "faecher": {
+            "name": "Fächer"
+          }
+        }
+      },
+      "last_lesson_cancelled_today": {
+        "name": "Letzte Stunde entfällt heute",
+        "state_attributes": {
+          "beginn": {
+            "name": "Beginn"
+          },
+          "ende": {
+            "name": "Ende"
+          },
+          "faecher": {
+            "name": "Fächer"
           }
         }
       }

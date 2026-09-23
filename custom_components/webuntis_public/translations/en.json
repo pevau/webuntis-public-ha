@@ -325,6 +325,15 @@
       },
       "next_school_day_end": {
         "name": "Next school day ends"
+      },
+      "cancelled_lessons_today": {
+        "name": "Cancelled lessons today",
+        "unit_of_measurement": "cancellations",
+        "state_attributes": {
+          "termine": {
+            "name": "Cancelled lessons"
+          }
+        }
       }
     },
     "binary_sensor": {
@@ -378,6 +387,68 @@
           },
           "ende": {
             "name": "End"
+          }
+        }
+      },
+      "school_starts_later_today": {
+        "name": "School starts later today",
+        "state_attributes": {
+          "planmaessiger_beginn": {
+            "name": "Scheduled school start"
+          },
+          "tatsaechlicher_beginn": {
+            "name": "Actual school start"
+          },
+          "spaeter_um_minuten": {
+            "name": "Minutes later"
+          },
+          "ausgefallene_faecher_davor": {
+            "name": "Cancelled subjects before start"
+          }
+        }
+      },
+      "school_ends_earlier_today": {
+        "name": "School ends earlier today",
+        "state_attributes": {
+          "planmaessiger_schluss": {
+            "name": "Scheduled school end"
+          },
+          "tatsaechlicher_schluss": {
+            "name": "Actual school end"
+          },
+          "frueher_um_minuten": {
+            "name": "Minutes earlier"
+          },
+          "ausgefallene_faecher_danach": {
+            "name": "Cancelled subjects after end"
+          }
+        }
+      },
+      "first_lesson_cancelled_today": {
+        "name": "First lesson cancelled today",
+        "state_attributes": {
+          "beginn": {
+            "name": "Start"
+          },
+          "ende": {
+            "name": "End"
+          },
+          "faecher": {
+            "name": "Subjects"
+          }
+        }
+      },
+      "last_lesson_cancelled_today": {
+        "name": "Last lesson cancelled today",
+        "state_attributes": {
+          "beginn": {
+            "name": "Start"
+          },
+          "ende": {
+            "name": "End"
+          },
+          "faecher": {
+            "name": "Subjects"
           }
         }
       }

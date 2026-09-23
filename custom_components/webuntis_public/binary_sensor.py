@@ -12,7 +12,15 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
 from .coordinator import WebUntisPublicCoordinator
-from .schedule import current_slot, day_bounds, local_now, slot_subjects, unique_slots
+from .schedule import (
+    current_slot,
+    day_bounds,
+    local_now,
+    scheduled_slots,
+    slot_cancelled,
+    slot_subjects,
+    unique_slots,
+)
 
 
 async def async_setup_entry(
@@ -29,6 +37,10 @@ async def async_setup_entry(
                 WebUntisSchoolFreeTodayBinarySensor(entry, coordinator),
                 WebUntisSchoolFreeTomorrowBinarySensor(entry, coordinator),
                 WebUntisLessonRunningBinarySensor(entry, coordinator),
+                WebUntisSchoolStartsLaterTodayBinarySensor(entry, coordinator),
+                WebUntisSchoolEndsEarlierTodayBinarySensor(entry, coordinator),
+                WebUntisFirstLessonCancelledTodayBinarySensor(entry, coordinator),
+                WebUntisLastLessonCancelledTodayBinarySensor(entry, coordinator),
             ]
         )
     async_add_entities(entities)
@@ -162,3 +174,166 @@ class WebUntisLessonRunningBinarySensor(_WebUntisBinaryBase):
             "beginn": slot[0].isoformat(),
             "ende": slot[1].isoformat(),
         }
+
+
+
+def _day_boundary_data(lessons):
+    planned = scheduled_slots(lessons)
+    active = unique_slots(lessons)
+    if not planned:
+        return None, None, None, None
+
+    planned_start = planned[0][0]
+    planned_end = planned[-1][1]
+    actual_start = active[0][0] if active else None
+    actual_end = active[-1][1] if active else None
+    return planned_start, planned_end, actual_start, actual_end
+
+
+class WebUntisSchoolStartsLaterTodayBinarySensor(_WebUntisBinaryBase):
+    _attr_translation_key = "school_starts_later_today"
+    _attr_icon = "mdi:clock-alert-outline"
+
+    def __init__(
+        self, entry: ConfigEntry, coordinator: WebUntisPublicCoordinator
+    ) -> None:
+        super().__init__(entry, coordinator, "school_starts_later_today")
+
+    def _values(self):
+        lessons = self._lessons_for_day(0)
+        planned_start, _planned_end, actual_start, _actual_end = _day_boundary_data(lessons)
+        return lessons, planned_start, actual_start
+
+    @property
+    def is_on(self) -> bool:
+        _lessons, planned_start, actual_start = self._values()
+        return bool(
+            planned_start
+            and actual_start
+            and actual_start > planned_start
+        )
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        lessons, planned_start, actual_start = self._values()
+        cancelled_before_start = [
+            lesson.subject
+            for lesson in lessons
+            if lesson.cancelled
+            and actual_start is not None
+            and lesson.start < actual_start
+        ]
+        return {
+            "planmaessiger_beginn": (
+                planned_start.isoformat() if planned_start else None
+            ),
+            "tatsaechlicher_beginn": (
+                actual_start.isoformat() if actual_start else None
+            ),
+            "spaeter_um_minuten": (
+                int((actual_start - planned_start).total_seconds() // 60)
+                if planned_start and actual_start and actual_start > planned_start
+                else 0
+            ),
+            "ausgefallene_faecher_davor": cancelled_before_start,
+        }
+
+
+class WebUntisSchoolEndsEarlierTodayBinarySensor(_WebUntisBinaryBase):
+    _attr_translation_key = "school_ends_earlier_today"
+    _attr_icon = "mdi:clock-alert-outline"
+
+    def __init__(
+        self, entry: ConfigEntry, coordinator: WebUntisPublicCoordinator
+    ) -> None:
+        super().__init__(entry, coordinator, "school_ends_earlier_today")
+
+    def _values(self):
+        lessons = self._lessons_for_day(0)
+        _planned_start, planned_end, _actual_start, actual_end = _day_boundary_data(lessons)
+        return lessons, planned_end, actual_end
+
+    @property
+    def is_on(self) -> bool:
+        _lessons, planned_end, actual_end = self._values()
+        return bool(
+            planned_end
+            and actual_end
+            and actual_end < planned_end
+        )
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        lessons, planned_end, actual_end = self._values()
+        cancelled_after_end = [
+            lesson.subject
+            for lesson in lessons
+            if lesson.cancelled
+            and actual_end is not None
+            and lesson.end > actual_end
+        ]
+        return {
+            "planmaessiger_schluss": (
+                planned_end.isoformat() if planned_end else None
+            ),
+            "tatsaechlicher_schluss": (
+                actual_end.isoformat() if actual_end else None
+            ),
+            "frueher_um_minuten": (
+                int((planned_end - actual_end).total_seconds() // 60)
+                if planned_end and actual_end and actual_end < planned_end
+                else 0
+            ),
+            "ausgefallene_faecher_danach": cancelled_after_end,
+        }
+
+
+class _EdgeLessonCancelledBinarySensor(_WebUntisBinaryBase):
+    use_last = False
+
+    def _slot(self):
+        slots = scheduled_slots(self._lessons_for_day(0))
+        if not slots:
+            return None
+        return slots[-1] if self.use_last else slots[0]
+
+    @property
+    def is_on(self) -> bool:
+        slot = self._slot()
+        return bool(slot and slot_cancelled(slot))
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        slot = self._slot()
+        if slot is None:
+            return {}
+        return {
+            "beginn": slot[0].isoformat(),
+            "ende": slot[1].isoformat(),
+            "faecher": slot_subjects(slot),
+        }
+
+
+class WebUntisFirstLessonCancelledTodayBinarySensor(
+    _EdgeLessonCancelledBinarySensor
+):
+    _attr_translation_key = "first_lesson_cancelled_today"
+    _attr_icon = "mdi:calendar-start"
+
+    def __init__(
+        self, entry: ConfigEntry, coordinator: WebUntisPublicCoordinator
+    ) -> None:
+        super().__init__(entry, coordinator, "first_lesson_cancelled_today")
+
+
+class WebUntisLastLessonCancelledTodayBinarySensor(
+    _EdgeLessonCancelledBinarySensor
+):
+    _attr_translation_key = "last_lesson_cancelled_today"
+    _attr_icon = "mdi:calendar-end"
+    use_last = True
+
+    def __init__(
+        self, entry: ConfigEntry, coordinator: WebUntisPublicCoordinator
+    ) -> None:
+        super().__init__(entry, coordinator, "last_lesson_cancelled_today")

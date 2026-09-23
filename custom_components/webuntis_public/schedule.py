@@ -29,17 +29,31 @@ def active_lessons(lessons: Iterable[WebUntisLesson]) -> list[WebUntisLesson]:
     return [lesson for lesson in lessons if not lesson.cancelled]
 
 
-def unique_slots(
+def scheduled_slots(
     lessons: Iterable[WebUntisLesson],
 ) -> list[tuple[datetime, datetime, list[WebUntisLesson]]]:
-    """Group parallel lessons that share exactly the same time slot."""
+    """Group all timetable entries by their exact time slot, including cancellations."""
     grouped: dict[tuple[datetime, datetime], list[WebUntisLesson]] = {}
-    for lesson in active_lessons(lessons):
+    for lesson in lessons:
         grouped.setdefault((lesson.start, lesson.end), []).append(lesson)
     return [
         (start, end, grouped[(start, end)])
         for start, end in sorted(grouped, key=lambda value: (value[0], value[1]))
     ]
+
+
+def unique_slots(
+    lessons: Iterable[WebUntisLesson],
+) -> list[tuple[datetime, datetime, list[WebUntisLesson]]]:
+    """Group active parallel lessons that share exactly the same time slot."""
+    return scheduled_slots(active_lessons(lessons))
+
+
+def slot_cancelled(
+    slot: tuple[datetime, datetime, list[WebUntisLesson]],
+) -> bool:
+    """Return whether all timetable entries in a slot are cancelled."""
+    return bool(slot[2]) and all(lesson.cancelled for lesson in slot[2])
 
 
 def current_slot(

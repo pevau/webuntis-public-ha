@@ -2,6 +2,19 @@
 
 All notable changes to **WebUntis Public Timetable** are documented here.
 
+## [0.7.5] - 2026-09-23
+
+### Added
+
+- Added a sensor with the number and details of cancelled lessons today.
+- Added binary sensors for a later school start and an earlier school end caused by cancelled timetable entries at the beginning or end of the day.
+- Added binary sensors for a cancelled first and last lesson.
+- Later-start and earlier-end entities expose scheduled time, actual time, minute difference and affected subjects as attributes.
+
+### Note
+
+- The public WebUntis data exposes cancelled timetable entries but does not provide a separate original timestamp for every possible time shift. Therefore the new start/end indicators compare active lessons with cancelled timetable entries at the edges of the day and do not guess undocumented original times.
+
 ## [0.7.4] - 2026-09-23
 
 ### Added
