@@ -502,6 +502,40 @@
       "refresh_timetable": {
         "name": "Refresh timetable"
       }
+    },
+    "event": {
+      "timetable_change": {
+        "name": "Timetable changed",
+        "state_attributes": {
+          "detected_at": {
+            "name": "Detected at"
+          },
+          "week": {
+            "name": "Week"
+          },
+          "class_name": {
+            "name": "Class"
+          },
+          "added_count": {
+            "name": "Added"
+          },
+          "removed_count": {
+            "name": "Removed"
+          },
+          "change_count": {
+            "name": "Changes"
+          },
+          "added": {
+            "name": "Added lessons"
+          },
+          "removed": {
+            "name": "Removed lessons"
+          },
+          "truncated": {
+            "name": "List truncated"
+          }
+        }
+      }
     }
   },
   "common": {
