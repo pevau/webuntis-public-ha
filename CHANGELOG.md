@@ -2,6 +2,16 @@
 
 All notable changes to **WebUntis Public Timetable** are documented here.
 
+
+## [0.7.11] - 2026-09-23
+
+### Added
+
+- Added a compact summary sensor for the next actual school day after today.
+- The sensor skips days without active lessons and reuses the configured coordinator look-ahead cache without additional WebUntis requests.
+- Its numeric state is the number of active lesson slots; attributes include date, days until school, start/end time, subjects, teachers, rooms, changes, cancellations and a compact slot-by-slot timetable.
+- Cancelled-only days are skipped, while cancellations and other timetable changes on the selected school day remain visible in the summary attributes.
+
 ## [0.7.10] - 2026-09-23
 
 ### Added
