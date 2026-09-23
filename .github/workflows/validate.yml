@@ -54,6 +54,16 @@ jobs:
           if shape(en) != shape(de):
               raise SystemExit("Translation structures differ between en.json and de.json")
           print("OK: en/de translation key structure matches")
+
+          manifest = json.loads(
+              Path("custom_components/webuntis_public/manifest.json")
+              .read_text(encoding="utf-8")
+          )
+          version = manifest["version"]
+          changelog = Path("CHANGELOG.md").read_text(encoding="utf-8")
+          if f"## [{version}]" not in changelog:
+              raise SystemExit(f"Missing CHANGELOG entry for version {version}")
+          print(f"OK: CHANGELOG contains version {version}")
           PY
 
       - name: Compile Python files
@@ -65,6 +75,7 @@ jobs:
         shell: bash
         run: |
           test -f hacs.json
+          test -f CHANGELOG.md
           test -f custom_components/webuntis_public/manifest.json
           test -f custom_components/webuntis_public/__init__.py
           test -f custom_components/webuntis_public/config_flow.py
