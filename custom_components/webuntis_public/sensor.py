@@ -101,7 +101,7 @@ class _WebUntisSensorBase(
 
 
 class WebUntisCurrentLessonSensor(_WebUntisSensorBase):
-    _attr_name = "Aktuelle Stunde"
+    _attr_translation_key = "current_lesson"
     _attr_icon = "mdi:book-open-page-variant-outline"
     _time_sensitive = True
 
@@ -114,7 +114,7 @@ class WebUntisCurrentLessonSensor(_WebUntisSensorBase):
     @property
     def native_value(self) -> str:
         slot = self._slot()
-        return slot_subjects(slot) if slot else "Kein Unterricht"
+        return slot_subjects(slot) if slot else "no_lesson"
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
@@ -132,7 +132,7 @@ class WebUntisCurrentLessonSensor(_WebUntisSensorBase):
 
 
 class WebUntisNextLessonSensor(_WebUntisSensorBase):
-    _attr_name = "Nächste Stunde"
+    _attr_translation_key = "next_lesson"
     _attr_icon = "mdi:book-clock-outline"
     _time_sensitive = True
 
@@ -182,7 +182,7 @@ class _DayBoundarySensor(_WebUntisSensorBase):
 
 
 class WebUntisTodayStartSensor(_DayBoundarySensor):
-    _attr_name = "Schulbeginn heute"
+    _attr_translation_key = "today_start"
     _attr_icon = "mdi:clock-start"
 
     def __init__(self, entry: ConfigEntry, coordinator: WebUntisPublicCoordinator) -> None:
@@ -190,7 +190,7 @@ class WebUntisTodayStartSensor(_DayBoundarySensor):
 
 
 class WebUntisTodayEndSensor(_DayBoundarySensor):
-    _attr_name = "Schulschluss heute"
+    _attr_translation_key = "today_end"
     _attr_icon = "mdi:clock-end"
     use_end = True
 
@@ -199,7 +199,7 @@ class WebUntisTodayEndSensor(_DayBoundarySensor):
 
 
 class WebUntisTomorrowStartSensor(_DayBoundarySensor):
-    _attr_name = "Schulbeginn morgen"
+    _attr_translation_key = "tomorrow_start"
     _attr_icon = "mdi:clock-start"
     day_offset = 1
 
@@ -208,7 +208,7 @@ class WebUntisTomorrowStartSensor(_DayBoundarySensor):
 
 
 class WebUntisTomorrowEndSensor(_DayBoundarySensor):
-    _attr_name = "Schulschluss morgen"
+    _attr_translation_key = "tomorrow_end"
     _attr_icon = "mdi:clock-end"
     day_offset = 1
     use_end = True
@@ -218,9 +218,8 @@ class WebUntisTomorrowEndSensor(_DayBoundarySensor):
 
 
 class WebUntisTodayLessonCountSensor(_WebUntisSensorBase):
-    _attr_name = "Stunden heute"
+    _attr_translation_key = "today_lesson_count"
     _attr_icon = "mdi:counter"
-    _attr_native_unit_of_measurement = "Stunden"
 
     def __init__(self, entry: ConfigEntry, coordinator: WebUntisPublicCoordinator) -> None:
         super().__init__(entry, coordinator, "today_lesson_count")
@@ -231,7 +230,7 @@ class WebUntisTodayLessonCountSensor(_WebUntisSensorBase):
 
 
 class WebUntisRemainingLessonsSensor(_WebUntisSensorBase):
-    _attr_name = "Verbleibende Stunden heute"
+    _attr_translation_key = "remaining_lessons_today"
     _attr_icon = "mdi:book-clock"
     _attr_native_unit_of_measurement = "Stunden"
     _time_sensitive = True
@@ -255,7 +254,7 @@ class WebUntisRemainingLessonsSensor(_WebUntisSensorBase):
 
 
 class WebUntisRemainingInstructionTimeSensor(_WebUntisSensorBase):
-    _attr_name = "Verbleibende Unterrichtszeit"
+    _attr_translation_key = "remaining_instruction_time"
     _attr_icon = "mdi:timer-sand"
     _attr_device_class = SensorDeviceClass.DURATION
     _attr_native_unit_of_measurement = UnitOfTime.MINUTES
@@ -287,7 +286,7 @@ class WebUntisRemainingInstructionTimeSensor(_WebUntisSensorBase):
 
 
 class WebUntisSchoolDayProgressSensor(_WebUntisSensorBase):
-    _attr_name = "Schultag-Fortschritt"
+    _attr_translation_key = "school_day_progress"
     _attr_icon = "mdi:progress-clock"
     _attr_native_unit_of_measurement = PERCENTAGE
     _time_sensitive = True
@@ -342,7 +341,7 @@ class WebUntisSchoolDayProgressSensor(_WebUntisSensorBase):
 
 
 class WebUntisInstructionProgressSensor(_WebUntisSensorBase):
-    _attr_name = "Unterrichtsfortschritt"
+    _attr_translation_key = "instruction_progress"
     _attr_icon = "mdi:book-clock-outline"
     _attr_native_unit_of_measurement = PERCENTAGE
     _time_sensitive = True
@@ -381,9 +380,8 @@ class WebUntisInstructionProgressSensor(_WebUntisSensorBase):
 
 
 class WebUntisTodayChangesSensor(_WebUntisSensorBase):
-    _attr_name = "Änderungen heute"
+    _attr_translation_key = "today_changes"
     _attr_icon = "mdi:calendar-alert"
-    _attr_native_unit_of_measurement = "Änderungen"
 
     def __init__(self, entry: ConfigEntry, coordinator: WebUntisPublicCoordinator) -> None:
         super().__init__(entry, coordinator, "today_changes")
@@ -410,26 +408,19 @@ class WebUntisTodayChangesSensor(_WebUntisSensorBase):
         }
 
 
-_DATA_SOURCE_LABELS = {
-    "live": "Live",
-    "cache": "Cache (aktuell)",
-    "stale_cache": "Cache (veraltet)",
-    "unavailable": "Nicht verfügbar",
-}
-
 
 class WebUntisDataStatusSensor(_WebUntisSensorBase):
-    _attr_name = "Datenstatus"
+    _attr_translation_key = "data_status"
     _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_device_class = SensorDeviceClass.ENUM
+    _attr_options = ["live", "cache", "stale_cache", "unavailable"]
 
     def __init__(self, entry: ConfigEntry, coordinator: WebUntisPublicCoordinator) -> None:
         super().__init__(entry, coordinator, "data_status")
 
     @property
     def native_value(self) -> str:
-        return _DATA_SOURCE_LABELS.get(
-            self.coordinator.data_source, self.coordinator.data_source
-        )
+        return self.coordinator.data_source
 
     @property
     def icon(self) -> str:
@@ -455,7 +446,7 @@ class WebUntisDataStatusSensor(_WebUntisSensorBase):
 
 
 class WebUntisLastSuccessfulFetchSensor(_WebUntisSensorBase):
-    _attr_name = "Letzte erfolgreiche Aktualisierung"
+    _attr_translation_key = "last_successful_fetch"
     _attr_device_class = SensorDeviceClass.TIMESTAMP
     _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_icon = "mdi:update"
@@ -469,10 +460,9 @@ class WebUntisLastSuccessfulFetchSensor(_WebUntisSensorBase):
 
 
 class WebUntisCachedWeeksSensor(_WebUntisSensorBase):
-    _attr_name = "Cache-Wochen"
+    _attr_translation_key = "cached_weeks"
     _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_icon = "mdi:database-clock"
-    _attr_native_unit_of_measurement = "Wochen"
     _attr_entity_registry_enabled_default = False
 
     def __init__(self, entry: ConfigEntry, coordinator: WebUntisPublicCoordinator) -> None:
