@@ -85,16 +85,9 @@ jobs:
             exit 0
           fi
 
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          if git rev-parse "$TAG" >/dev/null 2>&1; then
-            echo "Tag $TAG already exists."
-          else
-            git tag -a "$TAG" -m "WebUntis Public $VERSION"
-            git push origin "$TAG"
-          fi
-
+          # Let GitHub create the tag together with the release. This avoids a
+          # short window where HACS can see a new tag before release notes exist.
           gh release create "$TAG" \
+            --target "$GITHUB_SHA" \
             --title "WebUntis Public $VERSION" \
             --notes-file .release-notes.md
