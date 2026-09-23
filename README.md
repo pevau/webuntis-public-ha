@@ -24,6 +24,7 @@ Custom integration for Home Assistant that imports public WebUntis timetables wi
 - Persistent cache with fallback for temporary WebUntis outages
 - Diagnostics and configurable calendar display
 - German and English translations for setup, options, entities and calendar details
+- Local Home Assistant brand icon for custom-integration views (Home Assistant 2026.3+)
 
 ## Installation with HACS
 
@@ -69,7 +70,7 @@ Every release contains a short changelog which is also used as the GitHub/HACS r
 
 ## Current version
 
-`0.7.2`
+`0.7.3`
 
 ## Notes
 
