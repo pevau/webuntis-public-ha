@@ -1,14 +1,14 @@
 {
   "domain": "webuntis_public",
   "name": "WebUntis Public Timetable",
-  "version": "0.7.0",
-  "documentation": "https://github.com/pevau/webuntis-public-ha",
   "config_flow": true,
+  "documentation": "https://github.com/pevau/webuntis-public-ha",
+  "issue_tracker": "https://github.com/pevau/webuntis-public-ha/issues",
   "iot_class": "cloud_polling",
+  "version": "0.7.0",
   "requirements": [
     "webuntis-public==0.2.0"
   ],
-  "issue_tracker": "https://github.com/pevau/webuntis-public-ha/issues",
   "codeowners": [
     "@pevau"
   ]
