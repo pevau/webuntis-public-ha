@@ -6,6 +6,7 @@ from types import SimpleNamespace
 from custom_components.webuntis_public import (
     PLATFORMS,
     _configured_classes,
+    _remove_obsolete_entities,
     async_migrate_entry,
     async_setup_entry,
     async_unload_entry,
@@ -209,6 +210,10 @@ def test_setup_entry_creates_one_coordinator_per_configured_class(monkeypatch) -
         "custom_components.webuntis_public.WebUntisPublicCoordinator",
         FakeCoordinator,
     )
+    monkeypatch.setattr(
+        "custom_components.webuntis_public._remove_obsolete_entities",
+        lambda _hass, _entry, _coordinators: None,
+    )
 
     result = asyncio.run(async_setup_entry(hass, entry))
 
@@ -220,6 +225,46 @@ def test_setup_entry_creates_one_coordinator_per_configured_class(monkeypatch) -
     assert all(item.refreshed for item in created)
     assert entry.runtime_data == created
     assert forwarded == [(entry, PLATFORMS)]
+
+
+
+def test_remove_obsolete_entities_cleans_registry(monkeypatch) -> None:
+    entry = _entry(
+        {
+            CONF_CLASS_ID: 123,
+            CONF_CLASS_NAME: "5A",
+        }
+    )
+    coordinator = SimpleNamespace(device_identifier="example.webuntis.com-123")
+
+    obsolete = SimpleNamespace(
+        entity_id="binary_sensor.example_school_5a_school_free_today",
+        config_entry_id="entry-1",
+        unique_id="example.webuntis.com-123-school_free_today",
+    )
+    keep = SimpleNamespace(
+        entity_id="sensor.example_school_5a_school_status",
+        config_entry_id="entry-1",
+        unique_id="example.webuntis.com-123-school_status",
+    )
+
+    class FakeRegistry:
+        def __init__(self):
+            self.entities = {
+                obsolete.entity_id: obsolete,
+                keep.entity_id: keep,
+            }
+            self.removed = []
+
+        def async_remove(self, entity_id):
+            self.removed.append(entity_id)
+
+    registry = FakeRegistry()
+    monkeypatch.setattr(integration_module.er, "async_get", lambda _hass: registry)
+
+    _remove_obsolete_entities(SimpleNamespace(), entry, [coordinator])
+
+    assert registry.removed == [obsolete.entity_id]
 
 
 def test_unload_entry_unloads_all_platforms() -> None:
