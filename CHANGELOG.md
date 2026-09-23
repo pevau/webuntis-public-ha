@@ -3,6 +3,17 @@
 All notable changes to **WebUntis Public Timetable** are documented here.
 
 
+## [0.7.13] - 2026-09-23
+
+### Changed
+
+- Reduced the normal visible entity set to seven focused sensors plus the timetable calendar.
+- Removed all eight standalone binary sensors, the separate school-start/end-today sensors and the separate teaching-progress sensor.
+- Moved later/earlier school times, cancelled first/last lesson and teaching-progress details into the daily summary attributes.
+- Added a “no school tomorrow” attribute to the next-school-day summary.
+- Obsolete entity-registry entries from previous versions are now removed automatically during setup, so users no longer need to delete retired entities manually.
+- Diagnostic sensors remain available separately.
+
 ## [0.7.12] - 2026-09-23
 
 ### Changed
