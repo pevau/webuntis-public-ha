@@ -32,7 +32,9 @@ def _element_name(element: dict[str, Any], element_type: str) -> str:
     if element_type == "SUBJECT":
         candidates = ("longName", "displayName", "shortName", "name")
     elif element_type == "TEACHER":
-        candidates = ("displayName", "longName", "shortName", "name")
+        # Prefer WebUntis' long teacher name. displayName is school-configurable
+        # and is often only the teacher abbreviation in public timetables.
+        candidates = ("longName", "displayName", "shortName", "name")
     else:
         candidates = ("shortName", "displayName", "longName", "name")
 
