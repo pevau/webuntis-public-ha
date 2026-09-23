@@ -379,6 +379,39 @@
             "name": "Next lesson starts"
           }
         }
+      },
+      "school_status": {
+        "name": "School status",
+        "state": {
+          "school_free": "No school",
+          "before_school": "Before school",
+          "lesson": "Lesson",
+          "break": "Break",
+          "after_school": "After school"
+        },
+        "state_attributes": {
+          "schulbeginn": {
+            "name": "School starts"
+          },
+          "schulschluss": {
+            "name": "School ends"
+          },
+          "aktuelles_fach": {
+            "name": "Current subject"
+          },
+          "aktuelle_stunde_bis": {
+            "name": "Current lesson until"
+          },
+          "naechstes_fach": {
+            "name": "Next subject"
+          },
+          "naechste_stunde_ab": {
+            "name": "Next lesson from"
+          },
+          "verbleibende_stunden": {
+            "name": "Remaining lessons"
+          }
+        }
       }
     },
     "binary_sensor": {
