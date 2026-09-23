@@ -133,15 +133,15 @@ def _set_day_lookup(entity, mapping):
     entity._lessons_for_day = lambda offset=0: list(mapping.get(offset, []))
 
 
-def test_sensor_setup_registers_twenty_entities() -> None:
+def test_sensor_setup_registers_twenty_one_entities() -> None:
     coordinator = FakeCoordinator()
     entry = _entry(runtime_data=[coordinator])
     added = []
 
     asyncio.run(sensor_module.async_setup_entry(None, entry, added.extend))
 
-    assert len(added) == 20
-    assert len({entity.unique_id for entity in added}) == 20
+    assert len(added) == 21
+    assert len({entity.unique_id for entity in added}) == 21
 
 
 def test_binary_sensor_setup_registers_eight_entities() -> None:
@@ -209,6 +209,31 @@ def test_next_lesson_sensor_reports_future_lesson(
     attrs = sensor.extra_state_attributes
     assert attrs["laeuft_gerade"] is False
     assert attrs["beginn"] == (BASE + timedelta(minutes=60)).isoformat()
+
+
+def test_school_status_sensor_reports_break_and_context(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    lessons = [
+        _lesson(0, 45, subject="Mathematik"),
+        _lesson(60, 105, subject="Deutsch"),
+    ]
+    sensor = sensor_module.WebUntisSchoolStatusSensor(_entry(), FakeCoordinator())
+    _set_today(sensor, lessons)
+    monkeypatch.setattr(
+        sensor_module,
+        "local_now",
+        lambda _hass: BASE + timedelta(minutes=50),
+    )
+
+    assert sensor.native_value == "break"
+    attrs = sensor.extra_state_attributes
+    assert attrs["schulbeginn"] == BASE.isoformat()
+    assert attrs["schulschluss"] == (BASE + timedelta(minutes=105)).isoformat()
+    assert attrs["aktuelles_fach"] is None
+    assert attrs["naechstes_fach"] == "Deutsch"
+    assert attrs["naechste_stunde_ab"] == (BASE + timedelta(minutes=60)).isoformat()
+    assert attrs["verbleibende_stunden"] == 1
 
 
 @pytest.mark.parametrize(
