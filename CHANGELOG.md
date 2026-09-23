@@ -3,6 +3,13 @@
 All notable changes to **WebUntis Public Timetable** are documented here.
 
 
+## [0.7.14] - 2026-09-23
+
+### Added
+
+- Added a compact slot-by-slot `stundenplan` attribute to the daily summary sensor.
+- Each active lesson slot includes start/end time, subject, teacher, room and timetable-change status, matching the next-school-day summary structure.
+
 ## [0.7.13] - 2026-09-23
 
 ### Changed
