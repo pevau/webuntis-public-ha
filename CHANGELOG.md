@@ -3,6 +3,15 @@
 All notable changes to **WebUntis Public Timetable** are documented here.
 
 
+## [0.7.12] - 2026-09-23
+
+### Changed
+
+- Reduced the sensor surface per class from 22 to 13 focused sensors.
+- Removed redundant standalone sensors for tomorrow start/end, next-school-day start/end, lesson count, remaining lessons, remaining teaching time, today's changes and today's cancellations.
+- The removed information remains available through the central school-status, daily-summary, next-school-day and next-school-day-summary sensors.
+- Kept the teaching-progress sensor as a distinct break-excluding progress value and retained the three diagnostic sensors.
+
 ## [0.7.11] - 2026-09-23
 
 ### Added
