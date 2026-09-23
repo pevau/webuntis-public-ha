@@ -112,3 +112,4 @@ jobs:
           python -m pytest -q
           --cov=custom_components.webuntis_public
           --cov-report=term-missing
+          --cov-fail-under=75
