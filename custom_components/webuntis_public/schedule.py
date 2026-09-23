@@ -74,6 +74,24 @@ def next_slot(
     return min(candidates, key=lambda slot: (slot[0], slot[1]), default=None)
 
 
+def school_status(lessons: Iterable[WebUntisLesson], now: datetime) -> str:
+    """Return the current school-day status for active lessons."""
+    slots = unique_slots(lessons)
+    if not slots:
+        return "school_free"
+
+    start = min(slot[0] for slot in slots)
+    end = max(slot[1] for slot in slots)
+
+    if now < start:
+        return "before_school"
+    if now >= end:
+        return "after_school"
+    if current_slot(lessons, now) is not None:
+        return "lesson"
+    return "break"
+
+
 def slot_subjects(slot: tuple[datetime, datetime, list[WebUntisLesson]]) -> str:
     """Return all subjects in a slot, preserving source order."""
     values: list[str] = []
