@@ -2,6 +2,15 @@
 
 All notable changes to **WebUntis Public Timetable** are documented here.
 
+## [0.7.7] - 2026-09-23
+
+### Added
+
+- Added a compact daily summary sensor for each configured class.
+- The sensor state is the number of active lesson slots today and remains automation-friendly.
+- Attributes include school start/end, subjects, timetable changes, cancellations, school-day progress, remaining lessons, current lesson and next lesson.
+- The time-dependent attributes update locally every minute without additional WebUntis requests.
+
 ## [0.7.6] - 2026-09-23
 
 ### Added

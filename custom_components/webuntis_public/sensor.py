@@ -57,6 +57,7 @@ async def async_setup_entry(
                 WebUntisInstructionProgressSensor(entry, coordinator),
                 WebUntisTodayChangesSensor(entry, coordinator),
                 WebUntisCancelledLessonsTodaySensor(entry, coordinator),
+                WebUntisDailySummarySensor(entry, coordinator),
                 WebUntisDataStatusSensor(entry, coordinator),
                 WebUntisLastSuccessfulFetchSensor(entry, coordinator),
                 WebUntisCachedWeeksSensor(entry, coordinator),
@@ -514,6 +515,117 @@ class WebUntisCancelledLessonsTodaySensor(_WebUntisSensorBase):
                 }
                 for lesson in self._cancelled()
             ]
+        }
+
+
+class WebUntisDailySummarySensor(_WebUntisSensorBase):
+    _attr_translation_key = "daily_summary"
+    _attr_icon = "mdi:calendar-today"
+    _time_sensitive = True
+
+    def __init__(self, entry: ConfigEntry, coordinator: WebUntisPublicCoordinator) -> None:
+        super().__init__(entry, coordinator, "daily_summary")
+
+    def _values(self):
+        lessons = self._lessons_today()
+        slots = unique_slots(lessons)
+        now = local_now(self.hass)
+        changed = [lesson for lesson in lessons if lesson.changed]
+        cancelled = [lesson for lesson in lessons if lesson.cancelled]
+
+        start = min((slot[0] for slot in slots), default=None)
+        end = max((slot[1] for slot in slots), default=None)
+
+        if start is None or end is None:
+            progress = None
+        elif now <= start:
+            progress = 0.0
+        elif now >= end:
+            progress = 100.0
+        else:
+            total = (end - start).total_seconds()
+            elapsed = (now - start).total_seconds()
+            progress = 100.0 * elapsed / total if total > 0 else 100.0
+
+        remaining = [slot for slot in slots if slot[1] > now]
+        current = current_slot(lessons, now)
+
+        upcoming = [
+            slot for slot in slots
+            if slot[0] > now
+        ]
+        next_lesson = min(
+            upcoming,
+            key=lambda slot: (slot[0], slot[1]),
+            default=None,
+        )
+
+        return {
+            "lessons": lessons,
+            "slots": slots,
+            "changed": changed,
+            "cancelled": cancelled,
+            "start": start,
+            "end": end,
+            "progress": (
+                round(max(0.0, min(100.0, progress)), 1)
+                if progress is not None
+                else None
+            ),
+            "remaining": remaining,
+            "current": current,
+            "next": next_lesson,
+        }
+
+    @property
+    def native_value(self) -> int:
+        return len(self._values()["slots"])
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        values = self._values()
+        slots = values["slots"]
+        changed = values["changed"]
+        cancelled = values["cancelled"]
+        current = values["current"]
+        next_lesson = values["next"]
+
+        return {
+            "schulfrei": not slots,
+            "schulbeginn": (
+                values["start"].isoformat()
+                if values["start"] is not None
+                else None
+            ),
+            "schulschluss": (
+                values["end"].isoformat()
+                if values["end"] is not None
+                else None
+            ),
+            "faecher": [slot_subjects(slot) for slot in slots],
+            "aenderungen": len(changed),
+            "geaenderte_faecher": [
+                lesson.subject for lesson in changed
+            ],
+            "ausfaelle": len(cancelled),
+            "ausgefallene_faecher": [
+                lesson.subject for lesson in cancelled
+            ],
+            "fortschritt": values["progress"],
+            "verbleibende_stunden": len(values["remaining"]),
+            "aktuelle_stunde": (
+                slot_subjects(current) if current is not None else None
+            ),
+            "naechste_stunde": (
+                slot_subjects(next_lesson)
+                if next_lesson is not None
+                else None
+            ),
+            "naechste_stunde_beginn": (
+                next_lesson[0].isoformat()
+                if next_lesson is not None
+                else None
+            ),
         }
 
 

@@ -334,6 +334,51 @@
             "name": "Cancelled lessons"
           }
         }
+      },
+      "daily_summary": {
+        "name": "Daily summary",
+        "unit_of_measurement": "lessons",
+        "state_attributes": {
+          "schulfrei": {
+            "name": "No school"
+          },
+          "schulbeginn": {
+            "name": "School starts"
+          },
+          "schulschluss": {
+            "name": "School ends"
+          },
+          "faecher": {
+            "name": "Subjects"
+          },
+          "aenderungen": {
+            "name": "Changes"
+          },
+          "geaenderte_faecher": {
+            "name": "Changed subjects"
+          },
+          "ausfaelle": {
+            "name": "Cancellations"
+          },
+          "ausgefallene_faecher": {
+            "name": "Cancelled subjects"
+          },
+          "fortschritt": {
+            "name": "School day progress"
+          },
+          "verbleibende_stunden": {
+            "name": "Remaining lessons"
+          },
+          "aktuelle_stunde": {
+            "name": "Current lesson"
+          },
+          "naechste_stunde": {
+            "name": "Next lesson"
+          },
+          "naechste_stunde_beginn": {
+            "name": "Next lesson starts"
+          }
+        }
       }
     },
     "binary_sensor": {

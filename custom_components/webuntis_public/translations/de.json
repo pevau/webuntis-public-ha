@@ -334,6 +334,51 @@
             "name": "Ausgefallene Stunden"
           }
         }
+      },
+      "daily_summary": {
+        "name": "Tageszusammenfassung",
+        "unit_of_measurement": "Stunden",
+        "state_attributes": {
+          "schulfrei": {
+            "name": "Schulfrei"
+          },
+          "schulbeginn": {
+            "name": "Schulbeginn"
+          },
+          "schulschluss": {
+            "name": "Schulschluss"
+          },
+          "faecher": {
+            "name": "Fächer"
+          },
+          "aenderungen": {
+            "name": "Änderungen"
+          },
+          "geaenderte_faecher": {
+            "name": "Geänderte Fächer"
+          },
+          "ausfaelle": {
+            "name": "Ausfälle"
+          },
+          "ausgefallene_faecher": {
+            "name": "Ausgefallene Fächer"
+          },
+          "fortschritt": {
+            "name": "Schultag-Fortschritt"
+          },
+          "verbleibende_stunden": {
+            "name": "Verbleibende Stunden"
+          },
+          "aktuelle_stunde": {
+            "name": "Aktuelle Stunde"
+          },
+          "naechste_stunde": {
+            "name": "Nächste Stunde"
+          },
+          "naechste_stunde_beginn": {
+            "name": "Beginn nächste Stunde"
+          }
+        }
       }
     },
     "binary_sensor": {
