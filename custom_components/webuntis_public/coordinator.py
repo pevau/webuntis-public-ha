@@ -338,7 +338,7 @@ class WebUntisPublicCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     )
                 return True, "live", None
 
-        error_text = str(last_error) if last_error else "Unbekannter Abruffehler"
+        error_text = str(last_error) if last_error else "Unknown fetch error"
         if stale_entries is not None:
             _LOGGER.warning(
                 "WebUntis unavailable for week %s; using persistent/stale cache (%s)",
@@ -348,7 +348,7 @@ class WebUntisPublicCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             return False, "stale_cache", error_text
 
         raise WebUntisTemporaryUnavailable(
-            f"Abruf für Woche {key} fehlgeschlagen: {last_error}"
+            f"Fetch for week {key} failed: {last_error}"
         ) from last_error
 
     async def _async_fetch_week(self, monday: Date) -> list[dict[str, Any]]:
@@ -365,7 +365,7 @@ class WebUntisPublicCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         }
         headers = {
             "Accept": "application/json",
-            "User-Agent": "HomeAssistant-WebUntis-Public/0.6.0",
+            "User-Agent": "HomeAssistant-WebUntis-Public",
         }
         if self.school:
             headers["anonymous-school"] = self.school
@@ -381,7 +381,7 @@ class WebUntisPublicCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         entries: list[dict[str, Any]] = []
         if not isinstance(raw, dict):
-            raise ValueError("Unerwartetes WebUntis-Antwortformat")
+            raise ValueError("Unexpected WebUntis response format")
         for day in as_list(raw.get("days")):
             if not isinstance(day, dict):
                 continue
