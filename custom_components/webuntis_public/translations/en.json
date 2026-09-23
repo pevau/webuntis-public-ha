@@ -168,45 +168,6 @@
       "today_end": {
         "name": "School ends today"
       },
-      "tomorrow_start": {
-        "name": "School starts tomorrow"
-      },
-      "tomorrow_end": {
-        "name": "School ends tomorrow"
-      },
-      "today_lesson_count": {
-        "name": "Lessons today",
-        "unit_of_measurement": "lessons"
-      },
-      "remaining_lessons_today": {
-        "name": "Remaining lessons today",
-        "unit_of_measurement": "lessons",
-        "state_attributes": {
-          "faecher": {
-            "name": "Subjects"
-          },
-          "inklusive_aktuelle_stunde": {
-            "name": "Includes current lesson"
-          }
-        }
-      },
-      "remaining_instruction_time": {
-        "name": "Remaining teaching time",
-        "state_attributes": {
-          "verbleibende_stunden": {
-            "name": "Remaining lessons"
-          },
-          "schulschluss": {
-            "name": "School ends"
-          },
-          "bis_schulschluss_minuten": {
-            "name": "Minutes until school ends"
-          },
-          "pausen_nicht_mitgerechnet": {
-            "name": "Breaks excluded"
-          }
-        }
-      },
       "school_day_progress": {
         "name": "School day progress",
         "state_attributes": {
@@ -247,15 +208,6 @@
           },
           "pausen_nicht_mitgerechnet": {
             "name": "Breaks excluded"
-          }
-        }
-      },
-      "today_changes": {
-        "name": "Changes today",
-        "unit_of_measurement": "changes",
-        "state_attributes": {
-          "termine": {
-            "name": "Changed lessons"
           }
         }
       },
@@ -317,21 +269,6 @@
           },
           "faecher": {
             "name": "Subjects"
-          }
-        }
-      },
-      "next_school_day_start": {
-        "name": "Next school day starts"
-      },
-      "next_school_day_end": {
-        "name": "Next school day ends"
-      },
-      "cancelled_lessons_today": {
-        "name": "Cancelled lessons today",
-        "unit_of_measurement": "cancellations",
-        "state_attributes": {
-          "termine": {
-            "name": "Cancelled lessons"
           }
         }
       },
