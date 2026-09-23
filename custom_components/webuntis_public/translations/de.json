@@ -379,6 +379,39 @@
             "name": "Beginn nächste Stunde"
           }
         }
+      },
+      "school_status": {
+        "name": "Schulstatus",
+        "state": {
+          "school_free": "Schulfrei",
+          "before_school": "Vor Schulbeginn",
+          "lesson": "Unterricht",
+          "break": "Pause",
+          "after_school": "Nach Schulschluss"
+        },
+        "state_attributes": {
+          "schulbeginn": {
+            "name": "Schulbeginn"
+          },
+          "schulschluss": {
+            "name": "Schulschluss"
+          },
+          "aktuelles_fach": {
+            "name": "Aktuelles Fach"
+          },
+          "aktuelle_stunde_bis": {
+            "name": "Aktuelle Stunde bis"
+          },
+          "naechstes_fach": {
+            "name": "Nächstes Fach"
+          },
+          "naechste_stunde_ab": {
+            "name": "Nächste Stunde ab"
+          },
+          "verbleibende_stunden": {
+            "name": "Verbleibende Stunden"
+          }
+        }
       }
     },
     "binary_sensor": {
