@@ -2,6 +2,16 @@
 
 All notable changes to **WebUntis Public Timetable** are documented here.
 
+## [0.7.10] - 2026-09-23
+
+### Added
+
+- Added a central school-status sensor for each configured class.
+- The sensor exposes stable automation-friendly states: `school_free`, `before_school`, `lesson`, `break` and `after_school`.
+- Attributes include current and next subject, current lesson end, next lesson start, school start/end and remaining lessons.
+- Cancelled lessons do not count as active teaching; cancelled-only days are reported as `school_free`.
+- The time-dependent status updates locally every minute without additional WebUntis requests.
+
 ## [0.7.9] - 2026-09-23
 
 ### Fixed
