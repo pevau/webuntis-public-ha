@@ -168,45 +168,6 @@
       "today_end": {
         "name": "Schulschluss heute"
       },
-      "tomorrow_start": {
-        "name": "Schulbeginn morgen"
-      },
-      "tomorrow_end": {
-        "name": "Schulschluss morgen"
-      },
-      "today_lesson_count": {
-        "name": "Stunden heute",
-        "unit_of_measurement": "Stunden"
-      },
-      "remaining_lessons_today": {
-        "name": "Verbleibende Stunden heute",
-        "unit_of_measurement": "Stunden",
-        "state_attributes": {
-          "faecher": {
-            "name": "Fächer"
-          },
-          "inklusive_aktuelle_stunde": {
-            "name": "Inklusive aktuelle Stunde"
-          }
-        }
-      },
-      "remaining_instruction_time": {
-        "name": "Verbleibende Unterrichtszeit",
-        "state_attributes": {
-          "verbleibende_stunden": {
-            "name": "Verbleibende Stunden"
-          },
-          "schulschluss": {
-            "name": "Schulschluss"
-          },
-          "bis_schulschluss_minuten": {
-            "name": "Minuten bis Schulschluss"
-          },
-          "pausen_nicht_mitgerechnet": {
-            "name": "Pausen nicht mitgerechnet"
-          }
-        }
-      },
       "school_day_progress": {
         "name": "Schultag-Fortschritt",
         "state_attributes": {
@@ -247,15 +208,6 @@
           },
           "pausen_nicht_mitgerechnet": {
             "name": "Pausen nicht mitgerechnet"
-          }
-        }
-      },
-      "today_changes": {
-        "name": "Änderungen heute",
-        "unit_of_measurement": "Änderungen",
-        "state_attributes": {
-          "termine": {
-            "name": "Geänderte Stunden"
           }
         }
       },
@@ -317,21 +269,6 @@
           },
           "faecher": {
             "name": "Fächer"
-          }
-        }
-      },
-      "next_school_day_start": {
-        "name": "Schulbeginn nächster Schultag"
-      },
-      "next_school_day_end": {
-        "name": "Schulschluss nächster Schultag"
-      },
-      "cancelled_lessons_today": {
-        "name": "Ausfälle heute",
-        "unit_of_measurement": "Ausfälle",
-        "state_attributes": {
-          "termine": {
-            "name": "Ausgefallene Stunden"
           }
         }
       },
