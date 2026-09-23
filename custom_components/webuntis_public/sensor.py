@@ -129,14 +129,14 @@ class WebUntisCurrentLessonSensor(_WebUntisSensorBase):
     def extra_state_attributes(self) -> dict[str, Any]:
         slot = self._slot()
         if slot is None:
-            return {"laeuft_gerade": False}
+            return {"in_progress": False}
         return {
-            "beginn": slot[0].isoformat(),
-            "ende": slot[1].isoformat(),
-            "raum": slot_rooms(slot),
-            "lehrer": slot_teachers(slot),
-            "geaendert": slot_changed(slot),
-            "laeuft_gerade": True,
+            "start_time": slot[0].isoformat(),
+            "end_time": slot[1].isoformat(),
+            "room": slot_rooms(slot),
+            "teachers": slot_teachers(slot),
+            "changed": slot_changed(slot),
+            "in_progress": True,
         }
 
 
@@ -168,12 +168,12 @@ class WebUntisNextLessonSensor(_WebUntisSensorBase):
             return {}
         now = local_now(self.hass)
         return {
-            "beginn": slot[0].isoformat(),
-            "ende": slot[1].isoformat(),
-            "raum": slot_rooms(slot),
-            "lehrer": slot_teachers(slot),
-            "laeuft_gerade": slot[0] <= now < slot[1],
-            "geaendert": slot_changed(slot),
+            "start_time": slot[0].isoformat(),
+            "end_time": slot[1].isoformat(),
+            "room": slot_rooms(slot),
+            "teachers": slot_teachers(slot),
+            "in_progress": slot[0] <= now < slot[1],
+            "changed": slot_changed(slot),
         }
 
 
@@ -228,13 +228,13 @@ class WebUntisSchoolStatusSensor(_WebUntisSensorBase):
         current = values["current"]
         next_lesson = values["next"]
         return {
-            "schulbeginn": values["start"].isoformat() if values["start"] is not None else None,
-            "schulschluss": values["end"].isoformat() if values["end"] is not None else None,
-            "aktuelles_fach": slot_subjects(current) if current is not None else None,
-            "aktuelle_stunde_bis": current[1].isoformat() if current is not None else None,
-            "naechstes_fach": slot_subjects(next_lesson) if next_lesson is not None else None,
-            "naechste_stunde_ab": next_lesson[0].isoformat() if next_lesson is not None else None,
-            "verbleibende_stunden": values["remaining"],
+            "school_start_time": values["start"].isoformat() if values["start"] is not None else None,
+            "school_end_time": values["end"].isoformat() if values["end"] is not None else None,
+            "current_subject": slot_subjects(current) if current is not None else None,
+            "current_lesson_end_time": current[1].isoformat() if current is not None else None,
+            "next_subject": slot_subjects(next_lesson) if next_lesson is not None else None,
+            "next_lesson_start_time": next_lesson[0].isoformat() if next_lesson is not None else None,
+            "remaining_lessons": values["remaining"],
         }
 
 
@@ -262,10 +262,10 @@ class WebUntisNextSchoolDaySensor(_WebUntisSensorBase):
             return {}
         _offset, slots = result
         return {
-            "schulbeginn": min(slot[0] for slot in slots).isoformat(),
-            "schulschluss": max(slot[1] for slot in slots).isoformat(),
-            "stunden": len(slots),
-            "faecher": [slot_subjects(slot) for slot in slots],
+            "school_start_time": min(slot[0] for slot in slots).isoformat(),
+            "school_end_time": max(slot[1] for slot in slots).isoformat(),
+            "lessons": len(slots),
+            "subjects": [slot_subjects(slot) for slot in slots],
         }
 
 
@@ -323,26 +323,26 @@ class WebUntisNextSchoolDaySummarySensor(_WebUntisSensorBase):
         cancelled = values["cancelled"]
 
         return {
-            "datum": slots[0][0].date().isoformat(),
-            "tage_bis_dahin": values["offset"],
-            "morgen_schulfrei": values["offset"] > 1,
-            "schulbeginn": min(slot[0] for slot in slots).isoformat(),
-            "schulschluss": max(slot[1] for slot in slots).isoformat(),
-            "faecher": [slot_subjects(slot) for slot in slots],
-            "lehrer": values["teachers"],
-            "raeume": values["rooms"],
-            "aenderungen": len(changed),
-            "geaenderte_faecher": [lesson.subject for lesson in changed],
-            "ausfaelle": len(cancelled),
-            "ausgefallene_faecher": [lesson.subject for lesson in cancelled],
-            "stundenplan": [
+            "date": slots[0][0].date().isoformat(),
+            "days_until": values["offset"],
+            "no_school_tomorrow": values["offset"] > 1,
+            "school_start_time": min(slot[0] for slot in slots).isoformat(),
+            "school_end_time": max(slot[1] for slot in slots).isoformat(),
+            "subjects": [slot_subjects(slot) for slot in slots],
+            "teachers": values["teachers"],
+            "rooms": values["rooms"],
+            "changes": len(changed),
+            "changed_subjects": [lesson.subject for lesson in changed],
+            "cancellations": len(cancelled),
+            "cancelled_subjects": [lesson.subject for lesson in cancelled],
+            "schedule": [
                 {
-                    "beginn": slot[0].isoformat(),
-                    "ende": slot[1].isoformat(),
+                    "start_time": slot[0].isoformat(),
+                    "end_time": slot[1].isoformat(),
                     "fach": slot_subjects(slot),
-                    "lehrer": slot_teachers(slot),
-                    "raum": slot_rooms(slot),
-                    "geaendert": slot_changed(slot),
+                    "teachers": slot_teachers(slot),
+                    "room": slot_rooms(slot),
+                    "changed": slot_changed(slot),
                 }
                 for slot in slots
             ],
@@ -386,7 +386,7 @@ class WebUntisSchoolDayProgressSensor(_WebUntisSensorBase):
     def extra_state_attributes(self) -> dict[str, Any]:
         progress, start, end = self._progress_data()
         if progress is None or start is None or end is None:
-            return {"schulfrei": True, "inklusive_pausen": True}
+            return {"school_free": True, "includes_breaks": True}
 
         now = local_now(self.hass)
         total_minutes = max(0, round((end - start).total_seconds() / 60))
@@ -395,12 +395,12 @@ class WebUntisSchoolDayProgressSensor(_WebUntisSensorBase):
             min(total_minutes, round((now - start).total_seconds() / 60)),
         )
         return {
-            "schulfrei": False,
-            "schulbeginn": start.isoformat(),
-            "schulschluss": end.isoformat(),
-            "vergangen_minuten": elapsed_minutes,
-            "gesamt_minuten": total_minutes,
-            "inklusive_pausen": True,
+            "school_free": False,
+            "school_start_time": start.isoformat(),
+            "school_end_time": end.isoformat(),
+            "elapsed_minutes": elapsed_minutes,
+            "total_minutes": total_minutes,
+            "includes_breaks": True,
         }
 
 
@@ -498,18 +498,18 @@ class WebUntisDailySummarySensor(_WebUntisSensorBase):
         next_lesson = values["next"]
 
         return {
-            "schulfrei": not slots,
-            "planmaessiger_schulbeginn": (
+            "school_free": not slots,
+            "scheduled_school_start_time": (
                 values["planned_start"].isoformat()
                 if values["planned_start"] is not None
                 else None
             ),
-            "planmaessiger_schulschluss": (
+            "scheduled_school_end_time": (
                 values["planned_end"].isoformat()
                 if values["planned_end"] is not None
                 else None
             ),
-            "spaeterer_schulbeginn_minuten": (
+            "late_start_minutes": (
                 int((values["start"] - values["planned_start"]).total_seconds() // 60)
                 if (
                     values["start"] is not None
@@ -518,7 +518,7 @@ class WebUntisDailySummarySensor(_WebUntisSensorBase):
                 )
                 else 0
             ),
-            "frueherer_schulschluss_minuten": (
+            "early_end_minutes": (
                 int((values["planned_end"] - values["end"]).total_seconds() // 60)
                 if (
                     values["end"] is not None
@@ -527,53 +527,53 @@ class WebUntisDailySummarySensor(_WebUntisSensorBase):
                 )
                 else 0
             ),
-            "erste_stunde_entfaellt": values["first_cancelled"],
-            "letzte_stunde_entfaellt": values["last_cancelled"],
-            "schulbeginn": (
+            "first_lesson_cancelled": values["first_cancelled"],
+            "last_lesson_cancelled": values["last_cancelled"],
+            "school_start_time": (
                 values["start"].isoformat()
                 if values["start"] is not None
                 else None
             ),
-            "schulschluss": (
+            "school_end_time": (
                 values["end"].isoformat()
                 if values["end"] is not None
                 else None
             ),
-            "faecher": [slot_subjects(slot) for slot in slots],
-            "aenderungen": len(changed),
-            "geaenderte_faecher": [
+            "subjects": [slot_subjects(slot) for slot in slots],
+            "changes": len(changed),
+            "changed_subjects": [
                 lesson.subject for lesson in changed
             ],
-            "ausfaelle": len(cancelled),
-            "ausgefallene_faecher": [
+            "cancellations": len(cancelled),
+            "cancelled_subjects": [
                 lesson.subject for lesson in cancelled
             ],
-            "fortschritt": values["progress"],
-            "unterrichtsfortschritt": values["instruction_progress"],
-            "unterricht_minuten_absolviert": values["instruction_elapsed_minutes"],
-            "unterricht_minuten_gesamt": values["instruction_total_minutes"],
-            "verbleibende_stunden": len(values["remaining"]),
-            "aktuelle_stunde": (
+            "school_day_progress": values["progress"],
+            "instruction_progress": values["instruction_progress"],
+            "instruction_elapsed_minutes": values["instruction_elapsed_minutes"],
+            "instruction_total_minutes": values["instruction_total_minutes"],
+            "remaining_lessons": len(values["remaining"]),
+            "current_lesson": (
                 slot_subjects(current) if current is not None else None
             ),
-            "naechste_stunde": (
+            "next_lesson": (
                 slot_subjects(next_lesson)
                 if next_lesson is not None
                 else None
             ),
-            "naechste_stunde_beginn": (
+            "next_lesson_start_time": (
                 next_lesson[0].isoformat()
                 if next_lesson is not None
                 else None
             ),
-            "stundenplan": [
+            "schedule": [
                 {
-                    "beginn": slot[0].isoformat(),
-                    "ende": slot[1].isoformat(),
+                    "start_time": slot[0].isoformat(),
+                    "end_time": slot[1].isoformat(),
                     "fach": slot_subjects(slot),
-                    "lehrer": slot_teachers(slot),
-                    "raum": slot_rooms(slot),
-                    "geaendert": slot_changed(slot),
+                    "teachers": slot_teachers(slot),
+                    "room": slot_rooms(slot),
+                    "changed": slot_changed(slot),
                 }
                 for slot in slots
             ],
@@ -606,13 +606,13 @@ class WebUntisDataStatusSensor(_WebUntisSensorBase):
     def extra_state_attributes(self) -> dict[str, Any]:
         state = self.coordinator.diagnostic_state
         return {
-            "datenquelle": state["data_source"],
-            "cache_alter_minuten": state["cache_age_minutes"],
-            "cache_wochen": state["weeks_cached"],
-            "letzter_abrufversuch": state["last_refresh_attempt"],
-            "letzter_fehler": state["last_error"],
-            "letzter_fehler_zeitpunkt": state["last_error_at"],
-            "aufeinanderfolgende_fehler": state["consecutive_failures"],
+            "data_source": state["data_source"],
+            "cache_age_minutes": state["cache_age_minutes"],
+            "cached_weeks": state["weeks_cached"],
+            "last_refresh_attempt": state["last_refresh_attempt"],
+            "last_error": state["last_error"],
+            "last_error_at": state["last_error_at"],
+            "consecutive_failures": state["consecutive_failures"],
         }
 
 
@@ -645,4 +645,4 @@ class WebUntisCachedWeeksSensor(_WebUntisSensorBase):
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        return {"wochen": self.coordinator.diagnostic_weeks()}
+        return {"weeks": self.coordinator.diagnostic_weeks()}
