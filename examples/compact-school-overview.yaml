@@ -1,0 +1,89 @@
+# Compact school overview
+# Replace the three entity IDs below with the entity IDs from your Home Assistant instance.
+
+type: markdown
+content: >-
+  {% set today = 'sensor.school_class_daily_summary' %}
+  {% set status = 'sensor.school_class_school_status' %}
+  {% set next = 'sensor.school_class_next_school_day_summary' %}
+
+  ## 🎓 Schule
+
+  {% if state_attr(today, 'schulfrei') %}
+
+  ### 🏠 Heute schulfrei
+
+  {% else %}
+
+  {% set beginn = state_attr(today, 'schulbeginn') %}
+  {% set ende = state_attr(today, 'schulschluss') %}
+
+  ### 📚 Heute
+
+  🕒 **{{ as_datetime(beginn).strftime('%H:%M') }} –
+  {{ as_datetime(ende).strftime('%H:%M') }} Uhr**
+  · {{ states(today) }} Stunden
+
+  {% if states(status) == 'before_school' %}
+  ⏰ Unterricht beginnt um **{{ as_datetime(beginn).strftime('%H:%M') }} Uhr**
+
+  {% elif states(status) == 'lesson' %}
+  🎓 Aktuell: **{{ state_attr(today, 'aktuelle_stunde') }}**
+  {% if state_attr(today, 'naechste_stunde') %}
+  · danach **{{ state_attr(today, 'naechste_stunde') }}**
+  {% endif %}
+
+  {% elif states(status) == 'break' %}
+  ☕ **Pause**
+  {% if state_attr(today, 'naechste_stunde') %}
+  · danach **{{ state_attr(today, 'naechste_stunde') }}**
+  um {{ as_datetime(state_attr(today, 'naechste_stunde_beginn')).strftime('%H:%M') }} Uhr
+  {% endif %}
+
+  {% elif states(status) == 'after_school' %}
+  🏠 **Schule beendet**
+  {% endif %}
+
+  {% set ausfaelle = state_attr(today, 'ausfaelle') | int(0) %}
+  {% set aenderungen = state_attr(today, 'aenderungen') | int(0) %}
+
+  {% if ausfaelle > 0 %}
+  🔴 **{{ ausfaelle }} {{ 'Ausfall' if ausfaelle == 1 else 'Ausfälle' }}:**
+  {{ (state_attr(today, 'ausgefallene_faecher') or []) | join(', ') }}
+  {% endif %}
+
+  {% if aenderungen > 0 %}
+  🟠 **{{ aenderungen }} {{ 'Änderung' if aenderungen == 1 else 'Änderungen' }}:**
+  {{ (state_attr(today, 'geaenderte_faecher') or []) | join(', ') }}
+  {% endif %}
+
+  {% endif %}
+
+  ---
+
+  {% set datum = state_attr(next, 'datum') %}
+
+  {% if datum %}
+  {% set d = strptime(datum, '%Y-%m-%d') %}
+  {% set weekdays = [
+    'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag',
+    'Freitag', 'Samstag', 'Sonntag'
+  ] %}
+
+  ### 📅 Nächster Schultag
+
+  **{{ weekdays[d.weekday()] }}, {{ d.strftime('%d.%m.%Y') }}**
+
+  🕒 {{ as_datetime(state_attr(next, 'schulbeginn')).strftime('%H:%M') }}
+  – {{ as_datetime(state_attr(next, 'schulschluss')).strftime('%H:%M') }} Uhr
+  · **{{ states(next) }} Stunden**
+
+  📖 {{ (state_attr(next, 'faecher') or []) | join(' · ') }}
+
+  {% else %}
+
+  ### 📅 Nächster Schultag
+
+  Kein weiterer Schultag im geladenen Zeitraum.
+
+  {% endif %}
