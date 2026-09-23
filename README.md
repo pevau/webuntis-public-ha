@@ -16,7 +16,7 @@ Custom integration for Home Assistant that imports public WebUntis timetables wi
 - Subject, room and teacher details
 - Cancelled lessons, substitutions and semantic timetable-change detection
 - Duplicate lesson merging while keeping real parallel subjects separate
-- Sensors for current/next lesson, school start/end, next school day, remaining lessons and remaining teaching time
+- Sensors for current/next lesson, central school status, school start/end, next school day, remaining lessons and remaining teaching time
 - Binary sensors for school-free days, active lessons, timetable changes, later starts, earlier finishes and cancelled first/last lessons
 - School-day progress, teaching-time progress and a compact daily summary sensor
 - Central `DataUpdateCoordinator`
