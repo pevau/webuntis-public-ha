@@ -566,6 +566,17 @@ class WebUntisDailySummarySensor(_WebUntisSensorBase):
                 if next_lesson is not None
                 else None
             ),
+            "stundenplan": [
+                {
+                    "beginn": slot[0].isoformat(),
+                    "ende": slot[1].isoformat(),
+                    "fach": slot_subjects(slot),
+                    "lehrer": slot_teachers(slot),
+                    "raum": slot_rooms(slot),
+                    "geaendert": slot_changed(slot),
+                }
+                for slot in slots
+            ],
         }
 
 
