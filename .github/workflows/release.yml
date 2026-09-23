@@ -16,6 +16,8 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Read version
         id: version
@@ -24,7 +26,10 @@ jobs:
           VERSION="$(python - <<'PY'
           import json
           from pathlib import Path
-          manifest = json.loads(Path("custom_components/webuntis_public/manifest.json").read_text())
+          manifest = json.loads(
+              Path("custom_components/webuntis_public/manifest.json")
+              .read_text(encoding="utf-8")
+          )
           print(manifest["version"])
           PY
           )"
@@ -39,6 +44,34 @@ jobs:
             echo "Invalid version: $VERSION"
             exit 1
           fi
+
+      - name: Build release notes from changelog
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        shell: bash
+        run: |
+          python - <<'PY'
+          import os
+          import re
+          from pathlib import Path
+
+          version = os.environ["VERSION"]
+          text = Path("CHANGELOG.md").read_text(encoding="utf-8")
+          pattern = re.compile(
+              rf"^## \[{re.escape(version)}\].*?\n(?P<body>.*?)(?=^## \[|\Z)",
+              re.MULTILINE | re.DOTALL,
+          )
+          match = pattern.search(text)
+          if not match:
+              raise SystemExit(f"No CHANGELOG entry found for version {version}")
+
+          body = match.group("body").strip()
+          Path(".release-notes.md").write_text(
+              f"## What's changed\n\n{body}\n",
+              encoding="utf-8",
+          )
+          print(Path(".release-notes.md").read_text(encoding="utf-8"))
+          PY
 
       - name: Create GitHub release
         env:
@@ -64,4 +97,4 @@ jobs:
 
           gh release create "$TAG" \
             --title "WebUntis Public $VERSION" \
-            --generate-notes
+            --notes-file .release-notes.md
