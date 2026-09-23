@@ -412,6 +412,48 @@
             "name": "Remaining lessons"
           }
         }
+      },
+      "next_school_day_summary": {
+        "name": "Next school day summary",
+        "unit_of_measurement": "lessons",
+        "state_attributes": {
+          "datum": {
+            "name": "Date"
+          },
+          "tage_bis_dahin": {
+            "name": "Days until"
+          },
+          "schulbeginn": {
+            "name": "School starts"
+          },
+          "schulschluss": {
+            "name": "School ends"
+          },
+          "faecher": {
+            "name": "Subjects"
+          },
+          "lehrer": {
+            "name": "Teachers"
+          },
+          "raeume": {
+            "name": "Rooms"
+          },
+          "aenderungen": {
+            "name": "Changes"
+          },
+          "geaenderte_faecher": {
+            "name": "Changed subjects"
+          },
+          "ausfaelle": {
+            "name": "Cancellations"
+          },
+          "ausgefallene_faecher": {
+            "name": "Cancelled subjects"
+          },
+          "stundenplan": {
+            "name": "Timetable"
+          }
+        }
       }
     },
     "binary_sensor": {
