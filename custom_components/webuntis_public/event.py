@@ -57,10 +57,10 @@ class WebUntisTimetableChangeEvent(
     def _handle_coordinator_update(self) -> None:
         sequence = self.coordinator.timetable_change_sequence
         if sequence > self._last_sequence:
-            change: dict[str, Any] | None = (
-                self.coordinator.last_timetable_change
+            changes: list[dict[str, Any]] = (
+                self.coordinator.timetable_changes_since(self._last_sequence)
             )
-            if change is not None:
+            for change in changes:
                 self._trigger_event("timetable_changed", change)
             self._last_sequence = sequence
 
