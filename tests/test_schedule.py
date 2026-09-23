@@ -242,6 +242,40 @@ def test_remaining_instruction_minutes_rounds_up_partial_minute() -> None:
     assert schedule.remaining_instruction_minutes([lesson], now) == 1
 
 
+@pytest.mark.parametrize(
+    ("now_minutes", "expected"),
+    [
+        (-1, "before_school"),
+        (0, "lesson"),
+        (44, "lesson"),
+        (45, "break"),
+        (59, "break"),
+        (60, "lesson"),
+        (105, "after_school"),
+    ],
+)
+def test_school_status_across_the_school_day(
+    now_minutes: int,
+    expected: str,
+) -> None:
+    lessons = [
+        _lesson(0, 45, subject="Mathematik"),
+        _lesson(60, 105, subject="Deutsch"),
+    ]
+
+    assert schedule.school_status(
+        lessons,
+        BASE + timedelta(minutes=now_minutes),
+    ) == expected
+
+
+def test_school_status_is_school_free_without_active_lessons() -> None:
+    cancelled = _lesson(0, 45, status="CANCEL")
+
+    assert schedule.school_status([], BASE) == "school_free"
+    assert schedule.school_status([cancelled], BASE) == "school_free"
+
+
 def test_day_bounds_uses_home_assistant_timezone(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         schedule.dt_util,
