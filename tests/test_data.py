@@ -1,0 +1,327 @@
+from __future__ import annotations
+
+from datetime import datetime, timedelta, timezone
+
+import pytest
+
+from custom_components.webuntis_public.const import (
+    TITLE_SUBJECT,
+    TITLE_SUBJECT_ROOM,
+    TITLE_SUBJECT_ROOM_TEACHER,
+    TITLE_SUBJECT_TEACHER,
+)
+from custom_components.webuntis_public.data import WebUntisLesson, as_list, parse_lessons
+
+
+UTC = timezone.utc
+DAY_START = datetime(2026, 9, 23, 0, 0, tzinfo=UTC)
+DAY_END = DAY_START + timedelta(days=1)
+
+
+def _element(
+    element_type: str,
+    *,
+    long_name: str | None = None,
+    display_name: str | None = None,
+    short_name: str | None = None,
+    name: str | None = None,
+) -> dict[str, str]:
+    result = {"type": element_type}
+    if long_name is not None:
+        result["longName"] = long_name
+    if display_name is not None:
+        result["displayName"] = display_name
+    if short_name is not None:
+        result["shortName"] = short_name
+    if name is not None:
+        result["name"] = name
+    return result
+
+
+def _entry(
+    *,
+    start: datetime | str = datetime(2026, 9, 23, 8, 0, tzinfo=UTC),
+    end: datetime | str = datetime(2026, 9, 23, 8, 45, tzinfo=UTC),
+    subject: dict[str, str] | None = None,
+    old_subject: dict[str, str] | None = None,
+    teacher: dict[str, str] | None = None,
+    old_teacher: dict[str, str] | None = None,
+    room: dict[str, str] | None = None,
+    old_room: dict[str, str] | None = None,
+    status: str = "REGULAR",
+    substitution_text: str | None = None,
+    lesson_info: str | None = None,
+) -> dict:
+    def iso(value: datetime | str) -> str:
+        return value.isoformat() if isinstance(value, datetime) else value
+
+    entry: dict = {
+        "duration": {"start": iso(start), "end": iso(end)},
+        "status": status,
+        "position1": [
+            {
+                "current": [subject] if subject else [],
+                "removed": [old_subject] if old_subject else [],
+            }
+        ],
+        "position2": [
+            {
+                "current": [room] if room else [],
+                "removed": [old_room] if old_room else [],
+            }
+        ],
+        "position3": [
+            {
+                "current": [teacher] if teacher else [],
+                "removed": [old_teacher] if old_teacher else [],
+            }
+        ],
+    }
+    if substitution_text is not None:
+        entry["substitutionText"] = substitution_text
+    if lesson_info is not None:
+        entry["lessonInfo"] = lesson_info
+    return entry
+
+
+def _parse(*entries: dict) -> list[WebUntisLesson]:
+    return parse_lessons(list(entries), DAY_START, DAY_END, UTC)
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        (None, []),
+        ([1, 2], [1, 2]),
+        ((1, 2), [1, 2]),
+        ("one", ["one"]),
+    ],
+)
+def test_as_list_normalizes_supported_values(value, expected) -> None:
+    assert as_list(value) == expected
+
+
+def test_parse_regular_lesson() -> None:
+    lessons = _parse(
+        _entry(
+            subject=_element("SUBJECT", long_name="Mathematik", short_name="M"),
+            teacher=_element("TEACHER", long_name="Max Mustermann", short_name="MM"),
+            room=_element("ROOM", short_name="A101", long_name="Raum A101"),
+        )
+    )
+
+    assert len(lessons) == 1
+    lesson = lessons[0]
+    assert lesson.subject == "Mathematik"
+    assert lesson.teacher == "Max Mustermann"
+    assert lesson.room == "A101"
+    assert lesson.status == "REGULAR"
+    assert lesson.raw_count == 1
+    assert lesson.changed is False
+    assert lesson.cancelled is False
+
+
+def test_teacher_prefers_long_name_over_display_name_and_short_name() -> None:
+    lesson = _parse(
+        _entry(
+            subject=_element("SUBJECT", long_name="Deutsch"),
+            teacher=_element(
+                "TEACHER",
+                long_name="Anna Beispiel",
+                display_name="AB",
+                short_name="A.B.",
+            ),
+        )
+    )[0]
+
+    assert lesson.teacher == "Anna Beispiel"
+
+
+def test_teacher_falls_back_to_display_name() -> None:
+    lesson = _parse(
+        _entry(
+            subject=_element("SUBJECT", long_name="Deutsch"),
+            teacher=_element("TEACHER", display_name="AB", short_name="A.B."),
+        )
+    )[0]
+
+    assert lesson.teacher == "AB"
+
+
+def test_subject_prefers_long_name() -> None:
+    lesson = _parse(
+        _entry(
+            subject=_element(
+                "SUBJECT",
+                long_name="Betriebswirtschaft",
+                display_name="BWL",
+                short_name="BW",
+            )
+        )
+    )[0]
+
+    assert lesson.subject == "Betriebswirtschaft"
+
+
+def test_room_prefers_short_name() -> None:
+    lesson = _parse(
+        _entry(
+            subject=_element("SUBJECT", long_name="Englisch"),
+            room=_element(
+                "ROOM",
+                short_name="B204",
+                display_name="Raum B204",
+                long_name="Gebäude B Raum 204",
+            ),
+        )
+    )[0]
+
+    assert lesson.room == "B204"
+
+
+def test_entry_outside_requested_range_is_ignored() -> None:
+    lessons = _parse(
+        _entry(
+            start=datetime(2026, 9, 22, 8, 0, tzinfo=UTC),
+            end=datetime(2026, 9, 22, 8, 45, tzinfo=UTC),
+            subject=_element("SUBJECT", long_name="Mathematik"),
+        )
+    )
+
+    assert lessons == []
+
+
+def test_entry_with_invalid_datetime_is_ignored() -> None:
+    lessons = _parse(
+        _entry(
+            start="not-a-date",
+            subject=_element("SUBJECT", long_name="Mathematik"),
+        )
+    )
+
+    assert lessons == []
+
+
+def test_technical_duplicates_are_merged() -> None:
+    first = _entry(
+        subject=_element("SUBJECT", long_name="Mathematik"),
+        teacher=_element("TEACHER", long_name="Lehrer Eins"),
+        room=_element("ROOM", short_name="A101"),
+        lesson_info="Bitte Taschenrechner mitbringen",
+    )
+    second = _entry(
+        subject=_element("SUBJECT", long_name="Mathematik"),
+        teacher=_element("TEACHER", long_name="Lehrer Zwei"),
+        room=_element("ROOM", short_name="A102"),
+        lesson_info="Bitte Taschenrechner mitbringen",
+    )
+
+    lessons = _parse(first, second)
+
+    assert len(lessons) == 1
+    lesson = lessons[0]
+    assert lesson.raw_count == 2
+    assert lesson.teachers == ("Lehrer Eins", "Lehrer Zwei")
+    assert lesson.rooms == ("A101", "A102")
+    assert lesson.texts == (("lesson_info", "Bitte Taschenrechner mitbringen"),)
+
+
+def test_cancelled_lesson_uses_removed_subject_as_fallback() -> None:
+    lesson = _parse(
+        _entry(
+            subject=None,
+            old_subject=_element("SUBJECT", long_name="Physik"),
+            status="CANCEL",
+        )
+    )[0]
+
+    assert lesson.subject == "Physik"
+    assert lesson.cancelled is True
+    assert lesson.changed is True
+    assert lesson.status_label == "cancelled"
+
+
+def test_regular_lesson_with_changed_teacher_is_marked_changed() -> None:
+    lesson = _parse(
+        _entry(
+            subject=_element("SUBJECT", long_name="Deutsch"),
+            teacher=_element("TEACHER", long_name="Neue Lehrkraft"),
+            old_teacher=_element("TEACHER", long_name="Alte Lehrkraft"),
+        )
+    )[0]
+
+    assert lesson.changed is True
+
+
+def test_substitution_text_marks_lesson_changed() -> None:
+    lesson = _parse(
+        _entry(
+            subject=_element("SUBJECT", long_name="Deutsch"),
+            substitution_text="Vertretung",
+        )
+    )[0]
+
+    assert ("substitution", "Vertretung") in lesson.texts
+    assert lesson.changed is True
+
+
+@pytest.mark.parametrize(
+    ("status", "expected"),
+    [
+        ("", None),
+        ("REGULAR", None),
+        ("STANDARD", None),
+        ("CANCEL", "cancelled"),
+        ("ADDITIONAL", "additional"),
+        ("CHANGED", "changed"),
+        ("SPECIAL", "special"),
+    ],
+)
+def test_status_label(status: str, expected: str | None) -> None:
+    lesson = WebUntisLesson(
+        start=datetime(2026, 9, 23, 8, 0, tzinfo=UTC),
+        end=datetime(2026, 9, 23, 8, 45, tzinfo=UTC),
+        subject="Mathematik",
+        status=status,
+        subjects=("Mathematik",),
+        old_subjects=(),
+        teachers=("Max Mustermann",),
+        old_teachers=(),
+        rooms=("A101",),
+        old_rooms=(),
+        texts=(),
+        raw_count=1,
+    )
+
+    assert lesson.status_label == expected
+
+
+@pytest.mark.parametrize(
+    ("title_format", "expected"),
+    [
+        (TITLE_SUBJECT, "Mathematik"),
+        (TITLE_SUBJECT_ROOM, "Mathematik · A101"),
+        (TITLE_SUBJECT_TEACHER, "Mathematik · Max Mustermann"),
+        (
+            TITLE_SUBJECT_ROOM_TEACHER,
+            "Mathematik · A101 · Max Mustermann",
+        ),
+    ],
+)
+def test_formatted_summary(title_format: str, expected: str) -> None:
+    lesson = WebUntisLesson(
+        start=datetime(2026, 9, 23, 8, 0, tzinfo=UTC),
+        end=datetime(2026, 9, 23, 8, 45, tzinfo=UTC),
+        subject="Mathematik",
+        status="REGULAR",
+        subjects=("Mathematik",),
+        old_subjects=(),
+        teachers=("Max Mustermann",),
+        old_teachers=(),
+        rooms=("A101",),
+        old_rooms=(),
+        texts=(),
+        raw_count=1,
+    )
+
+    assert lesson.formatted_summary(title_format) == expected
