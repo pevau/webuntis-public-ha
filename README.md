@@ -61,6 +61,10 @@ The integration currently includes:
 
 Setup, options, entity names, data-status values and calendar details such as cancellations, substitutions and room changes follow the Home Assistant language.
 
+## Dashboard examples
+
+Ready-to-use Home Assistant dashboard examples are available in the [examples](examples/) directory.
+
 ## Updating
 
 When installed through HACS, updates can be installed directly from HACS. After updating the integration, restart Home Assistant.
