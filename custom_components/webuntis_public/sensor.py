@@ -23,6 +23,8 @@ from .schedule import (
     instruction_elapsed_seconds,
     instruction_total_seconds,
     school_status,
+    scheduled_slots,
+    slot_cancelled,
     slot_changed,
     slot_rooms,
     slot_subjects,
@@ -44,12 +46,9 @@ async def async_setup_entry(
                 WebUntisCurrentLessonSensor(entry, coordinator),
                 WebUntisNextLessonSensor(entry, coordinator),
                 WebUntisSchoolStatusSensor(entry, coordinator),
-                WebUntisTodayStartSensor(entry, coordinator),
-                WebUntisTodayEndSensor(entry, coordinator),
                 WebUntisNextSchoolDaySensor(entry, coordinator),
                 WebUntisNextSchoolDaySummarySensor(entry, coordinator),
                 WebUntisSchoolDayProgressSensor(entry, coordinator),
-                WebUntisInstructionProgressSensor(entry, coordinator),
                 WebUntisDailySummarySensor(entry, coordinator),
                 WebUntisDataStatusSensor(entry, coordinator),
                 WebUntisLastSuccessfulFetchSensor(entry, coordinator),
@@ -239,36 +238,6 @@ class WebUntisSchoolStatusSensor(_WebUntisSensorBase):
         }
 
 
-class _DayBoundarySensor(_WebUntisSensorBase):
-    _attr_device_class = SensorDeviceClass.TIMESTAMP
-    day_offset = 0
-    use_end = False
-
-    @property
-    def native_value(self) -> datetime | None:
-        slots = unique_slots(self._lessons_for_day(self.day_offset))
-        if not slots:
-            return None
-        return max(slot[1] for slot in slots) if self.use_end else min(slot[0] for slot in slots)
-
-
-class WebUntisTodayStartSensor(_DayBoundarySensor):
-    _attr_translation_key = "today_start"
-    _attr_icon = "mdi:clock-start"
-
-    def __init__(self, entry: ConfigEntry, coordinator: WebUntisPublicCoordinator) -> None:
-        super().__init__(entry, coordinator, "today_start")
-
-
-class WebUntisTodayEndSensor(_DayBoundarySensor):
-    _attr_translation_key = "today_end"
-    _attr_icon = "mdi:clock-end"
-    use_end = True
-
-    def __init__(self, entry: ConfigEntry, coordinator: WebUntisPublicCoordinator) -> None:
-        super().__init__(entry, coordinator, "today_end")
-
-
 class WebUntisNextSchoolDaySensor(_WebUntisSensorBase):
     _attr_translation_key = "next_school_day"
     _attr_icon = "mdi:calendar-arrow-right"
@@ -356,6 +325,7 @@ class WebUntisNextSchoolDaySummarySensor(_WebUntisSensorBase):
         return {
             "datum": slots[0][0].date().isoformat(),
             "tage_bis_dahin": values["offset"],
+            "morgen_schulfrei": values["offset"] > 1,
             "schulbeginn": min(slot[0] for slot in slots).isoformat(),
             "schulschluss": max(slot[1] for slot in slots).isoformat(),
             "faecher": [slot_subjects(slot) for slot in slots],
@@ -434,45 +404,6 @@ class WebUntisSchoolDayProgressSensor(_WebUntisSensorBase):
         }
 
 
-class WebUntisInstructionProgressSensor(_WebUntisSensorBase):
-    _attr_translation_key = "instruction_progress"
-    _attr_icon = "mdi:book-clock-outline"
-    _attr_native_unit_of_measurement = PERCENTAGE
-    _time_sensitive = True
-
-    def __init__(self, entry: ConfigEntry, coordinator: WebUntisPublicCoordinator) -> None:
-        super().__init__(entry, coordinator, "instruction_progress")
-
-    def _values(self) -> tuple[float | None, int, int]:
-        lessons = self._lessons_today()
-        total_seconds = instruction_total_seconds(lessons)
-        if total_seconds <= 0:
-            return None, 0, 0
-
-        elapsed_seconds = instruction_elapsed_seconds(lessons, local_now(self.hass))
-        progress = 100.0 * elapsed_seconds / total_seconds
-        return (
-            round(max(0.0, min(100.0, progress)), 1),
-            int((elapsed_seconds + 59) // 60),
-            int((total_seconds + 59) // 60),
-        )
-
-    @property
-    def native_value(self) -> float | None:
-        return self._values()[0]
-
-    @property
-    def extra_state_attributes(self) -> dict[str, Any]:
-        progress, elapsed_minutes, total_minutes = self._values()
-        return {
-            "schulfrei": progress is None,
-            "unterricht_minuten_absolviert": elapsed_minutes,
-            "unterricht_minuten_gesamt": total_minutes,
-            "unterricht_minuten_verbleibend": max(0, total_minutes - elapsed_minutes),
-            "pausen_nicht_mitgerechnet": True,
-        }
-
-
 class WebUntisDailySummarySensor(_WebUntisSensorBase):
     _attr_translation_key = "daily_summary"
     _attr_icon = "mdi:calendar-today"
@@ -487,6 +418,20 @@ class WebUntisDailySummarySensor(_WebUntisSensorBase):
         now = local_now(self.hass)
         changed = [lesson for lesson in lessons if lesson.changed]
         cancelled = [lesson for lesson in lessons if lesson.cancelled]
+        scheduled = scheduled_slots(lessons)
+
+        planned_start = min((slot[0] for slot in scheduled), default=None)
+        planned_end = max((slot[1] for slot in scheduled), default=None)
+        first_cancelled = bool(scheduled and slot_cancelled(scheduled[0]))
+        last_cancelled = bool(scheduled and slot_cancelled(scheduled[-1]))
+
+        instruction_total = instruction_total_seconds(lessons)
+        instruction_elapsed = instruction_elapsed_seconds(lessons, now)
+        instruction_progress = (
+            round(100.0 * instruction_elapsed / instruction_total, 1)
+            if instruction_total > 0
+            else None
+        )
 
         start = min((slot[0] for slot in slots), default=None)
         end = max((slot[1] for slot in slots), default=None)
@@ -520,6 +465,13 @@ class WebUntisDailySummarySensor(_WebUntisSensorBase):
             "slots": slots,
             "changed": changed,
             "cancelled": cancelled,
+            "planned_start": planned_start,
+            "planned_end": planned_end,
+            "first_cancelled": first_cancelled,
+            "last_cancelled": last_cancelled,
+            "instruction_progress": instruction_progress,
+            "instruction_elapsed_minutes": int((instruction_elapsed + 59) // 60),
+            "instruction_total_minutes": int((instruction_total + 59) // 60),
             "start": start,
             "end": end,
             "progress": (
@@ -547,6 +499,36 @@ class WebUntisDailySummarySensor(_WebUntisSensorBase):
 
         return {
             "schulfrei": not slots,
+            "planmaessiger_schulbeginn": (
+                values["planned_start"].isoformat()
+                if values["planned_start"] is not None
+                else None
+            ),
+            "planmaessiger_schulschluss": (
+                values["planned_end"].isoformat()
+                if values["planned_end"] is not None
+                else None
+            ),
+            "spaeterer_schulbeginn_minuten": (
+                int((values["start"] - values["planned_start"]).total_seconds() // 60)
+                if (
+                    values["start"] is not None
+                    and values["planned_start"] is not None
+                    and values["start"] > values["planned_start"]
+                )
+                else 0
+            ),
+            "frueherer_schulschluss_minuten": (
+                int((values["planned_end"] - values["end"]).total_seconds() // 60)
+                if (
+                    values["end"] is not None
+                    and values["planned_end"] is not None
+                    and values["end"] < values["planned_end"]
+                )
+                else 0
+            ),
+            "erste_stunde_entfaellt": values["first_cancelled"],
+            "letzte_stunde_entfaellt": values["last_cancelled"],
             "schulbeginn": (
                 values["start"].isoformat()
                 if values["start"] is not None
@@ -567,6 +549,9 @@ class WebUntisDailySummarySensor(_WebUntisSensorBase):
                 lesson.subject for lesson in cancelled
             ],
             "fortschritt": values["progress"],
+            "unterrichtsfortschritt": values["instruction_progress"],
+            "unterricht_minuten_absolviert": values["instruction_elapsed_minutes"],
+            "unterricht_minuten_gesamt": values["instruction_total_minutes"],
             "verbleibende_stunden": len(values["remaining"]),
             "aktuelle_stunde": (
                 slot_subjects(current) if current is not None else None
