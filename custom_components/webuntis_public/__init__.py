@@ -15,7 +15,7 @@ from .const import (
 )
 from .coordinator import WebUntisPublicCoordinator
 
-PLATFORMS = ["calendar", "sensor", "binary_sensor", "button"]
+PLATFORMS = ["calendar", "sensor", "binary_sensor", "button", "event"]
 
 
 def _configured_classes(entry: ConfigEntry) -> list[tuple[int, str]]:
