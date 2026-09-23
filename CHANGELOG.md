@@ -2,6 +2,17 @@
 
 All notable changes to **WebUntis Public Timetable** are documented here.
 
+## [0.7.3] - 2026-09-23
+
+### Fixed
+
+- Restored the integration brand icon files that were present in the ZIP builds but missing from the GitHub/HACS package.
+- Home Assistant 2026.3+ can now use the local integration icon in supported integration views.
+
+### Note
+
+- The HACS update entity currently still requests its picture from the Home Assistant Brands CDN. Therefore the HACS update dialog can continue to show a placeholder until HACS switches that view to the local Brands API.
+
 ## [0.7.2] - 2026-09-23
 
 ### Changed
