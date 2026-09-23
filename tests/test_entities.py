@@ -170,9 +170,9 @@ def test_current_lesson_sensor_reports_parallel_subjects_and_attributes(
 
     assert sensor.native_value == "Mathematik / Physik"
     attrs = sensor.extra_state_attributes
-    assert attrs["laeuft_gerade"] is True
-    assert attrs["raum"] == "A101, B201"
-    assert attrs["lehrer"] == "Anna Beispiel, Max Mustermann"
+    assert attrs["in_progress"] is True
+    assert attrs["room"] == "A101, B201"
+    assert attrs["teachers"] == "Anna Beispiel, Max Mustermann"
 
 
 def test_current_lesson_sensor_reports_no_lesson(
@@ -195,8 +195,8 @@ def test_next_lesson_sensor_reports_future_lesson(
 
     assert sensor.native_value == "Deutsch"
     attrs = sensor.extra_state_attributes
-    assert attrs["laeuft_gerade"] is False
-    assert attrs["beginn"] == (BASE + timedelta(minutes=60)).isoformat()
+    assert attrs["in_progress"] is False
+    assert attrs["start_time"] == (BASE + timedelta(minutes=60)).isoformat()
 
 
 def test_school_status_sensor_reports_break_and_context(
@@ -216,12 +216,12 @@ def test_school_status_sensor_reports_break_and_context(
 
     assert sensor.native_value == "break"
     attrs = sensor.extra_state_attributes
-    assert attrs["schulbeginn"] == BASE.isoformat()
-    assert attrs["schulschluss"] == (BASE + timedelta(minutes=105)).isoformat()
-    assert attrs["aktuelles_fach"] is None
-    assert attrs["naechstes_fach"] == "Deutsch"
-    assert attrs["naechste_stunde_ab"] == (BASE + timedelta(minutes=60)).isoformat()
-    assert attrs["verbleibende_stunden"] == 1
+    assert attrs["school_start_time"] == BASE.isoformat()
+    assert attrs["school_end_time"] == (BASE + timedelta(minutes=105)).isoformat()
+    assert attrs["current_subject"] is None
+    assert attrs["next_subject"] == "Deutsch"
+    assert attrs["next_lesson_start_time"] == (BASE + timedelta(minutes=60)).isoformat()
+    assert attrs["remaining_lessons"] == 1
 
 
 def test_next_school_day_skips_empty_and_cancelled_only_days() -> None:
@@ -242,8 +242,8 @@ def test_next_school_day_skips_empty_and_cancelled_only_days() -> None:
     )
 
     assert sensor.native_value == datetime(2026, 9, 25, tzinfo=UTC).date()
-    assert sensor.extra_state_attributes["stunden"] == 1
-    assert sensor.extra_state_attributes["faecher"] == ["Deutsch"]
+    assert sensor.extra_state_attributes["lessons"] == 1
+    assert sensor.extra_state_attributes["subjects"] == ["Deutsch"]
 
 
 def test_next_school_day_summary_combines_future_day_information() -> None:
@@ -282,17 +282,17 @@ def test_next_school_day_summary_combines_future_day_information() -> None:
 
     assert sensor.native_value == 2
     attrs = sensor.extra_state_attributes
-    assert attrs["datum"] == "2026-09-25"
-    assert attrs["tage_bis_dahin"] == 2
-    assert attrs["morgen_schulfrei"] is True
-    assert attrs["faecher"] == ["Mathematik", "Deutsch"]
-    assert attrs["lehrer"] == ["Anna Beispiel", "Max Mustermann"]
-    assert attrs["raeume"] == ["A101", "B201"]
-    assert attrs["aenderungen"] == 2
-    assert attrs["ausfaelle"] == 1
-    assert attrs["ausgefallene_faecher"] == ["Sport"]
-    assert len(attrs["stundenplan"]) == 2
-    assert attrs["stundenplan"][1]["geaendert"] is True
+    assert attrs["date"] == "2026-09-25"
+    assert attrs["days_until"] == 2
+    assert attrs["no_school_tomorrow"] is True
+    assert attrs["subjects"] == ["Mathematik", "Deutsch"]
+    assert attrs["teachers"] == ["Anna Beispiel", "Max Mustermann"]
+    assert attrs["rooms"] == ["A101", "B201"]
+    assert attrs["changes"] == 2
+    assert attrs["cancellations"] == 1
+    assert attrs["cancelled_subjects"] == ["Sport"]
+    assert len(attrs["schedule"]) == 2
+    assert attrs["schedule"][1]["changed"] is True
 
 
 def test_school_day_progress_includes_breaks(
@@ -307,7 +307,7 @@ def test_school_day_progress_includes_breaks(
     monkeypatch.setattr(sensor_module, "local_now", lambda _hass: BASE + timedelta(minutes=60))
 
     assert sensor.native_value == 50.0
-    assert sensor.extra_state_attributes["inklusive_pausen"] is True
+    assert sensor.extra_state_attributes["includes_breaks"] is True
 
 
 def test_school_day_progress_reports_school_free() -> None:
@@ -335,21 +335,21 @@ def test_daily_summary_combines_day_information(
 
     assert sensor.native_value == 2
     attrs = sensor.extra_state_attributes
-    assert attrs["schulfrei"] is False
-    assert attrs["aenderungen"] == 2
-    assert attrs["ausfaelle"] == 1
-    assert attrs["aktuelle_stunde"] == "Mathematik"
-    assert attrs["naechste_stunde"] == "Deutsch"
-    assert attrs["verbleibende_stunden"] == 2
-    assert attrs["planmaessiger_schulbeginn"] == BASE.isoformat()
-    assert attrs["planmaessiger_schulschluss"] == (BASE + timedelta(minutes=165)).isoformat()
-    assert attrs["spaeterer_schulbeginn_minuten"] == 0
-    assert attrs["frueherer_schulschluss_minuten"] == 60
-    assert attrs["erste_stunde_entfaellt"] is False
-    assert attrs["letzte_stunde_entfaellt"] is True
-    assert attrs["unterrichtsfortschritt"] == 22.2
-    assert attrs["unterricht_minuten_absolviert"] == 20
-    assert attrs["unterricht_minuten_gesamt"] == 90
+    assert attrs["school_free"] is False
+    assert attrs["changes"] == 2
+    assert attrs["cancellations"] == 1
+    assert attrs["current_lesson"] == "Mathematik"
+    assert attrs["next_lesson"] == "Deutsch"
+    assert attrs["remaining_lessons"] == 2
+    assert attrs["scheduled_school_start_time"] == BASE.isoformat()
+    assert attrs["scheduled_school_end_time"] == (BASE + timedelta(minutes=165)).isoformat()
+    assert attrs["late_start_minutes"] == 0
+    assert attrs["early_end_minutes"] == 60
+    assert attrs["first_lesson_cancelled"] is False
+    assert attrs["last_lesson_cancelled"] is True
+    assert attrs["instruction_progress"] == 22.2
+    assert attrs["instruction_elapsed_minutes"] == 20
+    assert attrs["instruction_total_minutes"] == 90
 
 
 @pytest.mark.parametrize(
@@ -369,7 +369,7 @@ def test_data_status_sensor_maps_source_to_icon(source: str, icon: str) -> None:
 
     assert sensor.native_value == source
     assert sensor.icon == icon
-    assert sensor.extra_state_attributes["cache_wochen"] == 2
+    assert sensor.extra_state_attributes["cached_weeks"] == 2
 
 
 def test_diagnostic_sensors_expose_last_fetch_and_cached_weeks() -> None:
@@ -379,7 +379,7 @@ def test_diagnostic_sensors_expose_last_fetch_and_cached_weeks() -> None:
 
     assert last_fetch.native_value == datetime(2026, 9, 23, 7, 55, tzinfo=UTC)
     assert cached.native_value == 2
-    assert cached.extra_state_attributes["wochen"][0]["week"] == "2026-09-21"
+    assert cached.extra_state_attributes["weeks"][0]["week"] == "2026-09-21"
 
 
 def _translations() -> dict[str, str]:
