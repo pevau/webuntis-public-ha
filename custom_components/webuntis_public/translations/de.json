@@ -1,11 +1,14 @@
 {
+  "title": "WebUntis Public Timetable",
   "config": {
     "step": {
       "user": {
         "title": "WebUntis Public Timetable",
         "description": "Wie möchtest du den öffentlichen Stundenplan einrichten?",
-        "data": {
-          "setup_method": "Einrichtung"
+        "menu_options": {
+          "school_search": "Schule suchen",
+          "public_link": "Öffentlichen WebUntis-Link verwenden",
+          "manual": "Server und Schule manuell eingeben"
         }
       },
       "school_search": {
@@ -87,6 +90,298 @@
     },
     "error": {
       "no_class_selected": "Bitte mindestens eine Klasse auswählen."
+    }
+  },
+  "selector": {
+    "title_format": {
+      "options": {
+        "subject": "Nur Fach",
+        "subject_room": "Fach · Raum",
+        "subject_teacher": "Fach · Lehrer",
+        "subject_room_teacher": "Fach · Raum · Lehrer"
+      }
+    }
+  },
+  "entity": {
+    "calendar": {
+      "timetable": {
+        "name": "Stundenplan"
+      }
+    },
+    "sensor": {
+      "current_lesson": {
+        "name": "Aktuelle Stunde",
+        "state": {
+          "no_lesson": "Kein Unterricht",
+          "lesson": "Unterricht"
+        },
+        "state_attributes": {
+          "beginn": {
+            "name": "Beginn"
+          },
+          "ende": {
+            "name": "Ende"
+          },
+          "raum": {
+            "name": "Raum"
+          },
+          "lehrer": {
+            "name": "Lehrer"
+          },
+          "geaendert": {
+            "name": "Geändert"
+          },
+          "laeuft_gerade": {
+            "name": "Läuft gerade"
+          }
+        }
+      },
+      "next_lesson": {
+        "name": "Nächste Stunde",
+        "state": {
+          "lesson": "Unterricht"
+        },
+        "state_attributes": {
+          "beginn": {
+            "name": "Beginn"
+          },
+          "ende": {
+            "name": "Ende"
+          },
+          "raum": {
+            "name": "Raum"
+          },
+          "lehrer": {
+            "name": "Lehrer"
+          },
+          "geaendert": {
+            "name": "Geändert"
+          },
+          "laeuft_gerade": {
+            "name": "Läuft gerade"
+          }
+        }
+      },
+      "today_start": {
+        "name": "Schulbeginn heute"
+      },
+      "today_end": {
+        "name": "Schulschluss heute"
+      },
+      "tomorrow_start": {
+        "name": "Schulbeginn morgen"
+      },
+      "tomorrow_end": {
+        "name": "Schulschluss morgen"
+      },
+      "today_lesson_count": {
+        "name": "Stunden heute",
+        "unit_of_measurement": "Stunden"
+      },
+      "remaining_lessons_today": {
+        "name": "Verbleibende Stunden heute",
+        "unit_of_measurement": "Stunden",
+        "state_attributes": {
+          "faecher": {
+            "name": "Fächer"
+          },
+          "inklusive_aktuelle_stunde": {
+            "name": "Inklusive aktuelle Stunde"
+          }
+        }
+      },
+      "remaining_instruction_time": {
+        "name": "Verbleibende Unterrichtszeit",
+        "state_attributes": {
+          "verbleibende_stunden": {
+            "name": "Verbleibende Stunden"
+          },
+          "schulschluss": {
+            "name": "Schulschluss"
+          },
+          "bis_schulschluss_minuten": {
+            "name": "Minuten bis Schulschluss"
+          },
+          "pausen_nicht_mitgerechnet": {
+            "name": "Pausen nicht mitgerechnet"
+          }
+        }
+      },
+      "school_day_progress": {
+        "name": "Schultag-Fortschritt",
+        "state_attributes": {
+          "schulfrei": {
+            "name": "Schulfrei"
+          },
+          "schulbeginn": {
+            "name": "Schulbeginn"
+          },
+          "schulschluss": {
+            "name": "Schulschluss"
+          },
+          "vergangen_minuten": {
+            "name": "Vergangene Minuten"
+          },
+          "gesamt_minuten": {
+            "name": "Gesamtminuten"
+          },
+          "inklusive_pausen": {
+            "name": "Inklusive Pausen"
+          }
+        }
+      },
+      "instruction_progress": {
+        "name": "Unterrichtsfortschritt",
+        "state_attributes": {
+          "schulfrei": {
+            "name": "Schulfrei"
+          },
+          "unterricht_minuten_absolviert": {
+            "name": "Unterrichtsminuten absolviert"
+          },
+          "unterricht_minuten_gesamt": {
+            "name": "Unterrichtsminuten gesamt"
+          },
+          "unterricht_minuten_verbleibend": {
+            "name": "Unterrichtsminuten verbleibend"
+          },
+          "pausen_nicht_mitgerechnet": {
+            "name": "Pausen nicht mitgerechnet"
+          }
+        }
+      },
+      "today_changes": {
+        "name": "Änderungen heute",
+        "unit_of_measurement": "Änderungen",
+        "state_attributes": {
+          "termine": {
+            "name": "Geänderte Stunden"
+          }
+        }
+      },
+      "data_status": {
+        "name": "Datenstatus",
+        "state": {
+          "live": "Live",
+          "cache": "Cache (aktuell)",
+          "stale_cache": "Cache (veraltet)",
+          "unavailable": "Nicht verfügbar"
+        },
+        "state_attributes": {
+          "datenquelle": {
+            "name": "Datenquelle"
+          },
+          "cache_alter_minuten": {
+            "name": "Cache-Alter in Minuten"
+          },
+          "cache_wochen": {
+            "name": "Cache-Wochen"
+          },
+          "letzter_abrufversuch": {
+            "name": "Letzter Abrufversuch"
+          },
+          "letzter_fehler": {
+            "name": "Letzter Fehler"
+          },
+          "letzter_fehler_zeitpunkt": {
+            "name": "Zeitpunkt des letzten Fehlers"
+          },
+          "aufeinanderfolgende_fehler": {
+            "name": "Aufeinanderfolgende Fehler"
+          }
+        }
+      },
+      "last_successful_fetch": {
+        "name": "Letzte erfolgreiche Aktualisierung"
+      },
+      "cached_weeks": {
+        "name": "Cache-Wochen",
+        "unit_of_measurement": "Wochen",
+        "state_attributes": {
+          "wochen": {
+            "name": "Wochen"
+          }
+        }
+      }
+    },
+    "binary_sensor": {
+      "today_has_changes": {
+        "name": "Stundenplanänderung heute",
+        "state_attributes": {
+          "anzahl": {
+            "name": "Anzahl"
+          },
+          "faecher": {
+            "name": "Fächer"
+          }
+        }
+      },
+      "school_free_today": {
+        "name": "Schulfrei heute",
+        "state_attributes": {
+          "geplante_ausgefallene_stunden": {
+            "name": "Geplante ausgefallene Stunden"
+          },
+          "grund": {
+            "name": "Grund",
+            "state": {
+              "no_active_lessons": "Keine stattfindenden Unterrichtsstunden im öffentlichen Stundenplan"
+            }
+          }
+        }
+      },
+      "school_free_tomorrow": {
+        "name": "Schulfrei morgen",
+        "state_attributes": {
+          "geplante_ausgefallene_stunden": {
+            "name": "Geplante ausgefallene Stunden"
+          },
+          "grund": {
+            "name": "Grund",
+            "state": {
+              "no_active_lessons": "Keine stattfindenden Unterrichtsstunden im öffentlichen Stundenplan"
+            }
+          }
+        }
+      },
+      "lesson_running": {
+        "name": "Unterricht läuft",
+        "state_attributes": {
+          "faecher": {
+            "name": "Fächer"
+          },
+          "beginn": {
+            "name": "Beginn"
+          },
+          "ende": {
+            "name": "Ende"
+          }
+        }
+      }
+    }
+  },
+  "common": {
+    "calendar": {
+      "lesson": "Unterricht",
+      "cancelled_summary": "{summary} (entfällt)",
+      "class_line": "Klasse: {value}",
+      "teacher_line": "Lehrer: {value}",
+      "room_line": "Raum: {value}",
+      "subject_change": "Fachänderung: {old} → {new}",
+      "teacher_change": "Vertretung: {old} → {new}",
+      "room_change": "Raumänderung: {old} → {new}",
+      "status_line": "Status: {value}",
+      "text_line": "{label}: {value}",
+      "status": {
+        "cancelled": "Ausfall",
+        "additional": "Zusätzlicher Unterricht",
+        "changed": "Geändert"
+      },
+      "text": {
+        "lesson_info": "Unterricht",
+        "substitution": "Vertretung",
+        "info": "Info"
+      }
     }
   }
 }
