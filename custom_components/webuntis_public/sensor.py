@@ -23,6 +23,7 @@ from .schedule import (
     instruction_elapsed_seconds,
     instruction_total_seconds,
     remaining_instruction_minutes,
+    school_status,
     slot_changed,
     slot_rooms,
     slot_subjects,
@@ -43,6 +44,7 @@ async def async_setup_entry(
             [
                 WebUntisCurrentLessonSensor(entry, coordinator),
                 WebUntisNextLessonSensor(entry, coordinator),
+                WebUntisSchoolStatusSensor(entry, coordinator),
                 WebUntisTodayStartSensor(entry, coordinator),
                 WebUntisTodayEndSensor(entry, coordinator),
                 WebUntisTomorrowStartSensor(entry, coordinator),
@@ -182,6 +184,67 @@ class WebUntisNextLessonSensor(_WebUntisSensorBase):
             "lehrer": slot_teachers(slot),
             "laeuft_gerade": slot[0] <= now < slot[1],
             "geaendert": slot_changed(slot),
+        }
+
+
+class WebUntisSchoolStatusSensor(_WebUntisSensorBase):
+    _attr_translation_key = "school_status"
+    _attr_device_class = SensorDeviceClass.ENUM
+    _attr_options = [
+        "school_free",
+        "before_school",
+        "lesson",
+        "break",
+        "after_school",
+    ]
+    _time_sensitive = True
+
+    def __init__(self, entry: ConfigEntry, coordinator: WebUntisPublicCoordinator) -> None:
+        super().__init__(entry, coordinator, "school_status")
+
+    def _values(self) -> dict[str, Any]:
+        lessons = self._lessons_today()
+        slots = unique_slots(lessons)
+        now = local_now(self.hass)
+        current = current_slot(lessons, now)
+        future = [slot for slot in slots if slot[0] > now]
+        next_lesson = min(future, key=lambda slot: (slot[0], slot[1]), default=None)
+        return {
+            "status": school_status(lessons, now),
+            "start": min((slot[0] for slot in slots), default=None),
+            "end": max((slot[1] for slot in slots), default=None),
+            "current": current,
+            "next": next_lesson,
+            "remaining": len([slot for slot in slots if slot[1] > now]),
+        }
+
+    @property
+    def native_value(self) -> str:
+        return self._values()["status"]
+
+    @property
+    def icon(self) -> str:
+        return {
+            "school_free": "mdi:calendar-remove-outline",
+            "before_school": "mdi:clock-start",
+            "lesson": "mdi:school",
+            "break": "mdi:coffee-outline",
+            "after_school": "mdi:home-clock-outline",
+        }.get(self.native_value, "mdi:school-outline")
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        values = self._values()
+        current = values["current"]
+        next_lesson = values["next"]
+        return {
+            "schulbeginn": values["start"].isoformat() if values["start"] is not None else None,
+            "schulschluss": values["end"].isoformat() if values["end"] is not None else None,
+            "aktuelles_fach": slot_subjects(current) if current is not None else None,
+            "aktuelle_stunde_bis": current[1].isoformat() if current is not None else None,
+            "naechstes_fach": slot_subjects(next_lesson) if next_lesson is not None else None,
+            "naechste_stunde_ab": next_lesson[0].isoformat() if next_lesson is not None else None,
+            "verbleibende_stunden": values["remaining"],
         }
 
 
