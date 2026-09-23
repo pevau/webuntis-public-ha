@@ -21,7 +21,7 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Validate JSON files
+      - name: Validate JSON and translations
         shell: bash
         run: |
           python - <<'PY'
@@ -31,12 +31,29 @@ jobs:
           files = [
               Path("hacs.json"),
               Path("custom_components/webuntis_public/manifest.json"),
-              Path("custom_components/webuntis_public/strings.json"),
+              Path("custom_components/webuntis_public/translations/en.json"),
               Path("custom_components/webuntis_public/translations/de.json"),
           ]
           for file in files:
               json.loads(file.read_text(encoding="utf-8"))
               print(f"OK: {file}")
+
+          def shape(value):
+              if isinstance(value, dict):
+                  return {key: shape(item) for key, item in value.items()}
+              return None
+
+          en = json.loads(
+              Path("custom_components/webuntis_public/translations/en.json")
+              .read_text(encoding="utf-8")
+          )
+          de = json.loads(
+              Path("custom_components/webuntis_public/translations/de.json")
+              .read_text(encoding="utf-8")
+          )
+          if shape(en) != shape(de):
+              raise SystemExit("Translation structures differ between en.json and de.json")
+          print("OK: en/de translation key structure matches")
           PY
 
       - name: Compile Python files
@@ -51,3 +68,6 @@ jobs:
           test -f custom_components/webuntis_public/manifest.json
           test -f custom_components/webuntis_public/__init__.py
           test -f custom_components/webuntis_public/config_flow.py
+          test -f custom_components/webuntis_public/translations/en.json
+          test -f custom_components/webuntis_public/translations/de.json
+          test ! -f custom_components/webuntis_public/strings.json
