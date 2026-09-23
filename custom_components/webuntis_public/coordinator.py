@@ -82,6 +82,7 @@ class WebUntisPublicCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._force_refresh = False
         self._timetable_change_sequence = 0
         self._last_timetable_change: dict[str, Any] | None = None
+        self._timetable_change_history: list[dict[str, Any]] = []
 
     @property
     def device_identifier(self) -> str:
@@ -112,6 +113,14 @@ class WebUntisPublicCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     def last_timetable_change(self) -> dict[str, Any] | None:
         """Return the last detected semantic timetable change."""
         return self._last_timetable_change
+
+    def timetable_changes_since(self, sequence: int) -> list[dict[str, Any]]:
+        """Return recent timetable changes newer than the supplied sequence."""
+        return [
+            change
+            for change in self._timetable_change_history
+            if int(change.get("sequence", 0)) > sequence
+        ]
 
     @property
     def last_successful_fetch(self) -> datetime | None:
@@ -364,6 +373,8 @@ class WebUntisPublicCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     self._timetable_change_sequence += 1
                     timetable_change["sequence"] = self._timetable_change_sequence
                     self._last_timetable_change = timetable_change
+                    self._timetable_change_history.append(timetable_change)
+                    self._timetable_change_history = self._timetable_change_history[-20:]
                     _LOGGER.info(
                         "Detected WebUntis timetable change for class %s in week %s: "
                         "%d added, %d removed",
