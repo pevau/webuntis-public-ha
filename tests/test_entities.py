@@ -133,15 +133,15 @@ def _set_day_lookup(entity, mapping):
     entity._lessons_for_day = lambda offset=0: list(mapping.get(offset, []))
 
 
-def test_sensor_setup_registers_twenty_one_entities() -> None:
+def test_sensor_setup_registers_twenty_two_entities() -> None:
     coordinator = FakeCoordinator()
     entry = _entry(runtime_data=[coordinator])
     added = []
 
     asyncio.run(sensor_module.async_setup_entry(None, entry, added.extend))
 
-    assert len(added) == 21
-    assert len({entity.unique_id for entity in added}) == 21
+    assert len(added) == 22
+    assert len({entity.unique_id for entity in added}) == 22
 
 
 def test_binary_sensor_setup_registers_eight_entities() -> None:
@@ -275,6 +275,54 @@ def test_next_school_day_skips_empty_and_cancelled_only_days() -> None:
     assert sensor.native_value == datetime(2026, 9, 25, tzinfo=UTC).date()
     assert sensor.extra_state_attributes["stunden"] == 1
     assert sensor.extra_state_attributes["faecher"] == ["Deutsch"]
+
+
+def test_next_school_day_summary_combines_future_day_information() -> None:
+    sensor = sensor_module.WebUntisNextSchoolDaySummarySensor(
+        _entry(),
+        FakeCoordinator(),
+    )
+    target_day = [
+        _lesson(
+            2 * 24 * 60,
+            2 * 24 * 60 + 45,
+            subject="Mathematik",
+        ),
+        _lesson(
+            2 * 24 * 60 + 60,
+            2 * 24 * 60 + 105,
+            subject="Deutsch",
+            status="CHANGED",
+            teachers=("Max Mustermann",),
+            rooms=("B201",),
+        ),
+        _lesson(
+            2 * 24 * 60 + 120,
+            2 * 24 * 60 + 165,
+            subject="Sport",
+            status="CANCEL",
+        ),
+    ]
+    _set_day_lookup(
+        sensor,
+        {
+            1: [_lesson(24 * 60, 24 * 60 + 45, status="CANCEL")],
+            2: target_day,
+        },
+    )
+
+    assert sensor.native_value == 2
+    attrs = sensor.extra_state_attributes
+    assert attrs["datum"] == "2026-09-25"
+    assert attrs["tage_bis_dahin"] == 2
+    assert attrs["faecher"] == ["Mathematik", "Deutsch"]
+    assert attrs["lehrer"] == ["Anna Beispiel", "Max Mustermann"]
+    assert attrs["raeume"] == ["A101", "B201"]
+    assert attrs["aenderungen"] == 2
+    assert attrs["ausfaelle"] == 1
+    assert attrs["ausgefallene_faecher"] == ["Sport"]
+    assert len(attrs["stundenplan"]) == 2
+    assert attrs["stundenplan"][1]["geaendert"] is True
 
 
 def test_lesson_count_ignores_cancelled_and_counts_parallel_slot_once() -> None:
