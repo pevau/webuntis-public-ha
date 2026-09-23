@@ -8,16 +8,16 @@ cards:
     content: >-
       {% set e = 'sensor.school_class_daily_summary' %}
       {% set status = 'sensor.school_class_school_status' %}
-      {% set beginn = state_attr(e, 'schulbeginn') %}
-      {% set ende = state_attr(e, 'schulschluss') %}
-      {% set ausfaelle = state_attr(e, 'ausfaelle') | int(0) %}
-      {% set aenderungen = state_attr(e, 'aenderungen') | int(0) %}
-      {% set spaeter = state_attr(e, 'spaeterer_schulbeginn_minuten') | int(0) %}
-      {% set frueher = state_attr(e, 'frueherer_schulschluss_minuten') | int(0) %}
+      {% set beginn = state_attr(e, 'school_start_time') %}
+      {% set ende = state_attr(e, 'school_end_time') %}
+      {% set ausfaelle = state_attr(e, 'cancellations') | int(0) %}
+      {% set aenderungen = state_attr(e, 'changes') | int(0) %}
+      {% set spaeter = state_attr(e, 'late_start_minutes') | int(0) %}
+      {% set frueher = state_attr(e, 'early_end_minutes') | int(0) %}
 
       ## 📚 Heute
 
-      {% if state_attr(e, 'schulfrei') %}
+      {% if state_attr(e, 'school_free') %}
 
       🏠 **Heute ist schulfrei.**
 
@@ -37,12 +37,12 @@ cards:
 
       {% if ausfaelle > 0 %}
       🔴 **{{ ausfaelle }} {{ 'Ausfall' if ausfaelle == 1 else 'Ausfälle' }}:**
-      {{ (state_attr(e, 'ausgefallene_faecher') or []) | join(', ') }}
+      {{ (state_attr(e, 'cancelled_subjects') or []) | join(', ') }}
       {% endif %}
 
       {% if aenderungen > 0 %}
       🟠 **{{ aenderungen }} {{ 'Änderung' if aenderungen == 1 else 'Änderungen' }}:**
-      {{ (state_attr(e, 'geaenderte_faecher') or []) | join(', ') }}
+      {{ (state_attr(e, 'changed_subjects') or []) | join(', ') }}
       {% endif %}
 
       {% if states(status) == 'before_school' %}
@@ -55,20 +55,20 @@ cards:
 
       ### 🎓 Aktuell
 
-      **{{ state_attr(e, 'aktuelle_stunde') }}**
+      **{{ state_attr(e, 'current_lesson') }}**
 
-      {% if state_attr(e, 'naechste_stunde') %}
-      ⏭️ Danach **{{ state_attr(e, 'naechste_stunde') }}**
-      um {{ as_datetime(state_attr(e, 'naechste_stunde_beginn')).strftime('%H:%M') }} Uhr
+      {% if state_attr(e, 'next_lesson') %}
+      ⏭️ Danach **{{ state_attr(e, 'next_lesson') }}**
+      um {{ as_datetime(state_attr(e, 'next_lesson_start_time')).strftime('%H:%M') }} Uhr
       {% endif %}
 
       {% elif states(status) == 'break' %}
 
       ### ☕ Pause
 
-      {% if state_attr(e, 'naechste_stunde') %}
-      ⏭️ Weiter mit **{{ state_attr(e, 'naechste_stunde') }}**
-      um {{ as_datetime(state_attr(e, 'naechste_stunde_beginn')).strftime('%H:%M') }} Uhr
+      {% if state_attr(e, 'next_lesson') %}
+      ⏭️ Weiter mit **{{ state_attr(e, 'next_lesson') }}**
+      um {{ as_datetime(state_attr(e, 'next_lesson_start_time')).strftime('%H:%M') }} Uhr
       {% endif %}
 
       {% elif states(status) == 'after_school' %}
@@ -79,19 +79,19 @@ cards:
 
       ### 🗓 Stundenplan
 
-      {% for stunde in state_attr(e, 'stundenplan') or [] %}
+      {% for stunde in state_attr(e, 'schedule') or [] %}
 
       {% set current =
-        now() >= as_datetime(stunde['beginn'])
-        and now() < as_datetime(stunde['ende'])
+        now() >= as_datetime(stunde['start_time'])
+        and now() < as_datetime(stunde['end_time'])
       %}
 
-      {% if current %}▶️ {% endif %}**{{ as_datetime(stunde['beginn']).strftime('%H:%M') }}
-      – {{ as_datetime(stunde['ende']).strftime('%H:%M') }}**
-      · **{{ stunde['fach'] }}**
-      {% if stunde['raum'] %} · 🏫 {{ stunde['raum'] }}{% endif %}
-      {% if stunde['lehrer'] %} · 👤 {{ stunde['lehrer'] }}{% endif %}
-      {% if stunde['geaendert'] %} · ⚠️ geändert{% endif %}
+      {% if current %}▶️ {% endif %}**{{ as_datetime(stunde['start_time']).strftime('%H:%M') }}
+      – {{ as_datetime(stunde['end_time']).strftime('%H:%M') }}**
+      · **{{ stunde['subject'] }}**
+      {% if stunde['room'] %} · 🏫 {{ stunde['room'] }}{% endif %}
+      {% if stunde['teachers'] %} · 👤 {{ stunde['teachers'] }}{% endif %}
+      {% if stunde['changed'] %} · ⚠️ geändert{% endif %}
 
       {% endfor %}
 
@@ -100,10 +100,10 @@ cards:
   - type: markdown
     content: >-
       {% set e = 'sensor.school_class_next_school_day_summary' %}
-      {% set datum = state_attr(e, 'datum') %}
-      {% set tage = state_attr(e, 'tage_bis_dahin') | int(0) %}
-      {% set ausfaelle = state_attr(e, 'ausfaelle') | int(0) %}
-      {% set aenderungen = state_attr(e, 'aenderungen') | int(0) %}
+      {% set datum = state_attr(e, 'date') %}
+      {% set tage = state_attr(e, 'days_until') | int(0) %}
+      {% set ausfaelle = state_attr(e, 'cancellations') | int(0) %}
+      {% set aenderungen = state_attr(e, 'changes') | int(0) %}
 
       ## 📅 Nächster Schultag
 
@@ -125,34 +125,34 @@ cards:
       **In {{ tage }} Tagen**
       {% endif %}
 
-      · 🕒 {{ as_datetime(state_attr(e, 'schulbeginn')).strftime('%H:%M') }}
-      – {{ as_datetime(state_attr(e, 'schulschluss')).strftime('%H:%M') }} Uhr
+      · 🕒 {{ as_datetime(state_attr(e, 'school_start_time')).strftime('%H:%M') }}
+      – {{ as_datetime(state_attr(e, 'school_end_time')).strftime('%H:%M') }} Uhr
       · **{{ states(e) }} Stunden**
 
-      {% if state_attr(e, 'morgen_schulfrei') %}
+      {% if state_attr(e, 'no_school_tomorrow') %}
       🏠 Morgen ist **schulfrei**.
       {% endif %}
 
       {% if ausfaelle > 0 %}
       🔴 **{{ ausfaelle }} {{ 'Ausfall' if ausfaelle == 1 else 'Ausfälle' }}:**
-      {{ (state_attr(e, 'ausgefallene_faecher') or []) | join(', ') }}
+      {{ (state_attr(e, 'cancelled_subjects') or []) | join(', ') }}
       {% endif %}
 
       {% if aenderungen > 0 %}
       🟠 **{{ aenderungen }} {{ 'Änderung' if aenderungen == 1 else 'Änderungen' }}:**
-      {{ (state_attr(e, 'geaenderte_faecher') or []) | join(', ') }}
+      {{ (state_attr(e, 'changed_subjects') or []) | join(', ') }}
       {% endif %}
 
       ### 🗓 Stundenplan
 
-      {% for stunde in state_attr(e, 'stundenplan') or [] %}
+      {% for stunde in state_attr(e, 'schedule') or [] %}
 
-      **{{ as_datetime(stunde['beginn']).strftime('%H:%M') }}
-      – {{ as_datetime(stunde['ende']).strftime('%H:%M') }}**
-      · **{{ stunde['fach'] }}**
-      {% if stunde['raum'] %} · 🏫 {{ stunde['raum'] }}{% endif %}
-      {% if stunde['lehrer'] %} · 👤 {{ stunde['lehrer'] }}{% endif %}
-      {% if stunde['geaendert'] %} · ⚠️ geändert{% endif %}
+      **{{ as_datetime(stunde['start_time']).strftime('%H:%M') }}
+      – {{ as_datetime(stunde['end_time']).strftime('%H:%M') }}**
+      · **{{ stunde['subject'] }}**
+      {% if stunde['room'] %} · 🏫 {{ stunde['room'] }}{% endif %}
+      {% if stunde['teachers'] %} · 👤 {{ stunde['teachers'] }}{% endif %}
+      {% if stunde['changed'] %} · ⚠️ geändert{% endif %}
 
       {% endfor %}
 
