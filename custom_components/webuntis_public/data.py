@@ -17,12 +17,6 @@ _POSITION_FALLBACK_TYPES = {
     "position4": "CLASS",
 }
 
-_STATUS_LABELS = {
-    "CANCEL": "Ausfall",
-    "ADDITIONAL": "Zusätzlicher Unterricht",
-    "CHANGED": "Geändert",
-}
-
 
 def as_list(value: Any) -> list[Any]:
     if value is None:
@@ -94,19 +88,19 @@ def _text_values(entry: dict[str, Any]) -> list[tuple[str, str]]:
         seen.add(text)
         result.append((label, text))
 
-    add("Unterricht", entry.get("lessonInfo"))
-    add("Vertretung", entry.get("substitutionText"))
-    add("Info", entry.get("periodText"))
+    add("lesson_info", entry.get("lessonInfo"))
+    add("substitution", entry.get("substitutionText"))
+    add("info", entry.get("periodText"))
 
     text_type_labels = {
-        "LESSON_INFO": "Unterricht",
-        "PERIOD_INFO": "Info",
-        "SUBSTITUTION_TEXT": "Vertretung",
+        "LESSON_INFO": "lesson_info",
+        "PERIOD_INFO": "info",
+        "SUBSTITUTION_TEXT": "substitution",
     }
     for text_item in as_list(entry.get("texts")):
         if not isinstance(text_item, dict):
             continue
-        label = text_type_labels.get(str(text_item.get("type") or "").upper(), "Info")
+        label = text_type_labels.get(str(text_item.get("type") or "").upper(), "info")
         add(label, text_item.get("text"))
 
     return result
@@ -157,20 +151,19 @@ class WebUntisLesson:
             return True
         if self.old_rooms and self.rooms and set(self.old_rooms) != set(self.rooms):
             return True
-        return any(label == "Vertretung" for label, _value in self.texts)
+        return any(label == "substitution" for label, _value in self.texts)
 
     @property
     def summary(self) -> str:
-        return f"{self.subject} (entfällt)" if self.cancelled else self.subject
+        return self.subject
 
-    def formatted_summary(self, title_format: str) -> str:
-        parts: list[str] = [self.subject]
+    def formatted_summary(self, title_format: str, *, subject: str | None = None) -> str:
+        parts: list[str] = [subject or self.subject]
         if title_format in {TITLE_SUBJECT_ROOM, TITLE_SUBJECT_ROOM_TEACHER} and self.room:
             parts.append(self.room)
         if title_format in {TITLE_SUBJECT_TEACHER, TITLE_SUBJECT_ROOM_TEACHER} and self.teacher:
             parts.append(self.teacher)
-        summary = " · ".join(parts)
-        return f"{summary} (entfällt)" if self.cancelled else summary
+        return " · ".join(parts)
 
     @property
     def room(self) -> str | None:
@@ -184,48 +177,15 @@ class WebUntisLesson:
 
     @property
     def status_label(self) -> str | None:
+        """Return a stable, language-neutral status key for UI translation."""
         if not self.status or self.status in {"REGULAR", "STANDARD"}:
             return None
-        return _STATUS_LABELS.get(self.status, self.status)
+        return {
+            "CANCEL": "cancelled",
+            "ADDITIONAL": "additional",
+            "CHANGED": "changed",
+        }.get(self.status, self.status.lower())
 
-    def description(
-        self,
-        class_name: str,
-        *,
-        show_class: bool = True,
-        show_teacher: bool = True,
-        show_room: bool = True,
-    ) -> str:
-        details: list[str] = []
-        if show_class:
-            details.append(f"Klasse: {class_name}")
-        if show_teacher and self.teacher:
-            details.append(f"Lehrer: {self.teacher}")
-        if show_room and self.room:
-            details.append(f"Raum: {self.room}")
-
-        if self.old_subjects and self.subjects and set(self.old_subjects) != set(self.subjects):
-            details.append(f"Fachänderung: {_join(self.old_subjects)} → {_join(self.subjects)}")
-        if (
-            show_teacher
-            and self.old_teachers
-            and self.teachers
-            and set(self.old_teachers) != set(self.teachers)
-        ):
-            details.append(f"Vertretung: {_join(self.old_teachers)} → {_join(self.teachers)}")
-        if (
-            show_room
-            and self.old_rooms
-            and self.rooms
-            and set(self.old_rooms) != set(self.rooms)
-        ):
-            details.append(f"Raumänderung: {_join(self.old_rooms)} → {_join(self.rooms)}")
-
-        if self.status_label:
-            details.append(f"Status: {self.status_label}")
-        for label, value in self.texts:
-            details.append(f"{label}: {value}")
-        return "\n".join(details)
 
 
 def parse_lessons(
@@ -250,7 +210,7 @@ def parse_lessons(
         subjects = elements["SUBJECT"]["current"]
         old_subjects = elements["SUBJECT"]["removed"]
         status = str(entry.get("status") or "").upper()
-        subject = _join(subjects) or _join(old_subjects) or "Unterricht"
+        subject = _join(subjects) or _join(old_subjects) or "lesson"
 
         key = (start, end, subject, status)
         item = grouped.get(key)
@@ -291,7 +251,7 @@ def parse_lessons(
         WebUntisLesson(
             start=item["start"],
             end=item["end"],
-            subject=_join(item["subjects"]) or _join(item["old_subjects"]) or "Unterricht",
+            subject=_join(item["subjects"]) or _join(item["old_subjects"]) or "lesson",
             status=item["status"],
             subjects=tuple(item["subjects"]),
             old_subjects=tuple(item["old_subjects"]),
