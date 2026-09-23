@@ -18,26 +18,26 @@ content: >-
   ⏰ **Noch vor Schulbeginn**
 
   Beginn um
-  **{{ as_datetime(state_attr(status, 'schulbeginn')).strftime('%H:%M') }} Uhr**
+  **{{ as_datetime(state_attr(status, 'school_start_time')).strftime('%H:%M') }} Uhr**
 
   {% elif s == 'lesson' %}
 
-  🎓 **{{ state_attr(status, 'aktuelles_fach') }}**
+  🎓 **{{ state_attr(status, 'current_subject') }}**
 
-  bis **{{ as_datetime(state_attr(status, 'aktuelle_stunde_bis')).strftime('%H:%M') }} Uhr**
+  bis **{{ as_datetime(state_attr(status, 'current_lesson_end_time')).strftime('%H:%M') }} Uhr**
 
-  {% if state_attr(status, 'naechstes_fach') %}
-  ⏭️ Danach **{{ state_attr(status, 'naechstes_fach') }}**
-  um {{ as_datetime(state_attr(status, 'naechste_stunde_ab')).strftime('%H:%M') }} Uhr
+  {% if state_attr(status, 'next_subject') %}
+  ⏭️ Danach **{{ state_attr(status, 'next_subject') }}**
+  um {{ as_datetime(state_attr(status, 'next_lesson_start_time')).strftime('%H:%M') }} Uhr
   {% endif %}
 
   {% elif s == 'break' %}
 
   ☕ **Pause**
 
-  {% if state_attr(status, 'naechstes_fach') %}
-  ⏭️ Weiter mit **{{ state_attr(status, 'naechstes_fach') }}**
-  um {{ as_datetime(state_attr(status, 'naechste_stunde_ab')).strftime('%H:%M') }} Uhr
+  {% if state_attr(status, 'next_subject') %}
+  ⏭️ Weiter mit **{{ state_attr(status, 'next_subject') }}**
+  um {{ as_datetime(state_attr(status, 'next_lesson_start_time')).strftime('%H:%M') }} Uhr
   {% endif %}
 
   {% elif s == 'after_school' %}
