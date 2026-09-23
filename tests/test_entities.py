@@ -6,7 +6,6 @@ from types import SimpleNamespace
 
 import pytest
 
-from custom_components.webuntis_public import binary_sensor as binary_module
 from custom_components.webuntis_public import button as button_module
 from custom_components.webuntis_public import calendar as calendar_module
 from custom_components.webuntis_public import event as event_module
@@ -133,26 +132,15 @@ def _set_day_lookup(entity, mapping):
     entity._lessons_for_day = lambda offset=0: list(mapping.get(offset, []))
 
 
-def test_sensor_setup_registers_thirteen_entities() -> None:
+def test_sensor_setup_registers_ten_entities() -> None:
     coordinator = FakeCoordinator()
     entry = _entry(runtime_data=[coordinator])
     added = []
 
     asyncio.run(sensor_module.async_setup_entry(None, entry, added.extend))
 
-    assert len(added) == 13
-    assert len({entity.unique_id for entity in added}) == 13
-
-
-def test_binary_sensor_setup_registers_eight_entities() -> None:
-    coordinator = FakeCoordinator()
-    entry = _entry(runtime_data=[coordinator])
-    added = []
-
-    asyncio.run(binary_module.async_setup_entry(None, entry, added.extend))
-
-    assert len(added) == 8
-    assert len({entity.unique_id for entity in added}) == 8
+    assert len(added) == 10
+    assert len({entity.unique_id for entity in added}) == 10
 
 
 def test_button_and_event_setup_register_one_entity_per_class() -> None:
@@ -236,25 +224,6 @@ def test_school_status_sensor_reports_break_and_context(
     assert attrs["verbleibende_stunden"] == 1
 
 
-@pytest.mark.parametrize(
-    ("sensor_class", "expected"),
-    [
-        (sensor_module.WebUntisTodayStartSensor, BASE),
-        (sensor_module.WebUntisTodayEndSensor, BASE + timedelta(minutes=105)),
-    ],
-)
-def test_day_boundary_sensors_ignore_cancelled_lessons(sensor_class, expected) -> None:
-    lessons = [
-        _lesson(0, 45, subject="Mathematik"),
-        _lesson(60, 105, subject="Deutsch"),
-        _lesson(120, 165, subject="Ausfall", status="CANCEL"),
-    ]
-    sensor = sensor_class(_entry(), FakeCoordinator())
-    sensor._lessons_for_day = lambda _offset=0: lessons
-
-    assert sensor.native_value == expected
-
-
 def test_next_school_day_skips_empty_and_cancelled_only_days() -> None:
     sensor = sensor_module.WebUntisNextSchoolDaySensor(_entry(), FakeCoordinator())
     _set_day_lookup(
@@ -315,6 +284,7 @@ def test_next_school_day_summary_combines_future_day_information() -> None:
     attrs = sensor.extra_state_attributes
     assert attrs["datum"] == "2026-09-25"
     assert attrs["tage_bis_dahin"] == 2
+    assert attrs["morgen_schulfrei"] is True
     assert attrs["faecher"] == ["Mathematik", "Deutsch"]
     assert attrs["lehrer"] == ["Anna Beispiel", "Max Mustermann"]
     assert attrs["raeume"] == ["A101", "B201"]
@@ -323,6 +293,8 @@ def test_next_school_day_summary_combines_future_day_information() -> None:
     assert attrs["ausgefallene_faecher"] == ["Sport"]
     assert len(attrs["stundenplan"]) == 2
     assert attrs["stundenplan"][1]["geaendert"] is True
+
+
 def test_school_day_progress_includes_breaks(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -338,24 +310,6 @@ def test_school_day_progress_includes_breaks(
     assert sensor.extra_state_attributes["inklusive_pausen"] is True
 
 
-def test_instruction_progress_excludes_breaks(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    lessons = [
-        _lesson(0, 45, subject="Mathematik"),
-        _lesson(60, 105, subject="Deutsch"),
-    ]
-    sensor = sensor_module.WebUntisInstructionProgressSensor(_entry(), FakeCoordinator())
-    _set_today(sensor, lessons)
-    monkeypatch.setattr(sensor_module, "local_now", lambda _hass: BASE + timedelta(minutes=60))
-
-    assert sensor.native_value == 50.0
-    attrs = sensor.extra_state_attributes
-    assert attrs["unterricht_minuten_absolviert"] == 45
-    assert attrs["unterricht_minuten_gesamt"] == 90
-    assert attrs["pausen_nicht_mitgerechnet"] is True
-
-
 def test_school_day_progress_reports_school_free() -> None:
     sensor = sensor_module.WebUntisSchoolDayProgressSensor(_entry(), FakeCoordinator())
     _set_today(sensor, [])
@@ -365,6 +319,8 @@ def test_school_day_progress_reports_school_free() -> None:
         "schulfrei": True,
         "inklusive_pausen": True,
     }
+
+
 def test_daily_summary_combines_day_information(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -385,6 +341,15 @@ def test_daily_summary_combines_day_information(
     assert attrs["aktuelle_stunde"] == "Mathematik"
     assert attrs["naechste_stunde"] == "Deutsch"
     assert attrs["verbleibende_stunden"] == 2
+    assert attrs["planmaessiger_schulbeginn"] == BASE.isoformat()
+    assert attrs["planmaessiger_schulschluss"] == (BASE + timedelta(minutes=165)).isoformat()
+    assert attrs["spaeterer_schulbeginn_minuten"] == 0
+    assert attrs["frueherer_schulschluss_minuten"] == 60
+    assert attrs["erste_stunde_entfaellt"] is False
+    assert attrs["letzte_stunde_entfaellt"] is True
+    assert attrs["unterrichtsfortschritt"] == 22.2
+    assert attrs["unterricht_minuten_absolviert"] == 20
+    assert attrs["unterricht_minuten_gesamt"] == 90
 
 
 @pytest.mark.parametrize(
@@ -415,94 +380,6 @@ def test_diagnostic_sensors_expose_last_fetch_and_cached_weeks() -> None:
     assert last_fetch.native_value == datetime(2026, 9, 23, 7, 55, tzinfo=UTC)
     assert cached.native_value == 2
     assert cached.extra_state_attributes["wochen"][0]["week"] == "2026-09-21"
-
-
-def test_today_changes_binary_sensor_reports_subjects() -> None:
-    changed = _lesson(0, 45, subject="Deutsch", status="CHANGED")
-    sensor = binary_module.WebUntisTodayChangesBinarySensor(_entry(), FakeCoordinator())
-    sensor._lessons_for_day = lambda _offset=0: [changed]
-
-    assert sensor.is_on is True
-    assert sensor.extra_state_attributes == {
-        "anzahl": 1,
-        "faecher": ["Deutsch"],
-    }
-
-
-def test_school_free_binary_sensor_is_on_for_cancelled_only_day() -> None:
-    sensor = binary_module.WebUntisSchoolFreeTodayBinarySensor(_entry(), FakeCoordinator())
-    sensor._lessons_for_day = lambda _offset=0: [
-        _lesson(0, 45, subject="Sport", status="CANCEL"),
-        _lesson(60, 105, subject="Deutsch", status="CANCEL"),
-    ]
-
-    assert sensor.is_on is True
-    assert sensor.extra_state_attributes == {
-        "geplante_ausgefallene_stunden": 2,
-        "grund": "no_active_lessons",
-    }
-
-
-def test_lesson_running_binary_sensor(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    sensor = binary_module.WebUntisLessonRunningBinarySensor(_entry(), FakeCoordinator())
-    sensor._lessons_for_day = lambda _offset=0: [_lesson(0, 45, subject="Mathematik")]
-    monkeypatch.setattr(binary_module, "local_now", lambda _hass: BASE + timedelta(minutes=10))
-
-    assert sensor.is_on is True
-    assert sensor.extra_state_attributes["faecher"] == "Mathematik"
-
-
-def test_school_starts_later_when_first_slot_is_cancelled() -> None:
-    sensor = binary_module.WebUntisSchoolStartsLaterTodayBinarySensor(
-        _entry(), FakeCoordinator()
-    )
-    sensor._lessons_for_day = lambda _offset=0: [
-        _lesson(0, 45, subject="Sport", status="CANCEL"),
-        _lesson(60, 105, subject="Deutsch"),
-    ]
-
-    assert sensor.is_on is True
-    attrs = sensor.extra_state_attributes
-    assert attrs["spaeter_um_minuten"] == 60
-    assert attrs["ausgefallene_faecher_davor"] == ["Sport"]
-
-
-def test_school_ends_earlier_when_last_slot_is_cancelled() -> None:
-    sensor = binary_module.WebUntisSchoolEndsEarlierTodayBinarySensor(
-        _entry(), FakeCoordinator()
-    )
-    sensor._lessons_for_day = lambda _offset=0: [
-        _lesson(0, 45, subject="Mathematik"),
-        _lesson(60, 105, subject="Sport", status="CANCEL"),
-    ]
-
-    assert sensor.is_on is True
-    attrs = sensor.extra_state_attributes
-    assert attrs["frueher_um_minuten"] == 60
-    assert attrs["ausgefallene_faecher_danach"] == ["Sport"]
-
-
-def test_first_and_last_lesson_cancelled_sensors() -> None:
-    lessons = [
-        _lesson(0, 45, subject="Sport", status="CANCEL"),
-        _lesson(60, 105, subject="Mathematik"),
-        _lesson(120, 165, subject="Deutsch", status="CANCEL"),
-    ]
-    first = binary_module.WebUntisFirstLessonCancelledTodayBinarySensor(
-        _entry(), FakeCoordinator()
-    )
-    last = binary_module.WebUntisLastLessonCancelledTodayBinarySensor(
-        _entry(), FakeCoordinator()
-    )
-    first._lessons_for_day = lambda _offset=0: lessons
-    last._lessons_for_day = lambda _offset=0: lessons
-
-    assert first.is_on is True
-    assert first.extra_state_attributes["faecher"] == "Sport"
-    assert last.is_on is True
-    assert last.extra_state_attributes["faecher"] == "Deutsch"
 
 
 def _translations() -> dict[str, str]:
