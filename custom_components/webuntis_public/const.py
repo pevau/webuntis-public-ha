@@ -8,14 +8,10 @@ CONF_CLASS_NAME = "class_name"
 CONF_CLASS_IDS = "class_ids"
 CONF_CLASS_NAMES = "class_names"
 
-CONF_SETUP_METHOD = "setup_method"
 CONF_SEARCH_QUERY = "search_query"
 CONF_SCHOOL_RESULT = "school_result"
 CONF_PUBLIC_LINK = "public_link"
 
-METHOD_SEARCH = "search"
-METHOD_PUBLIC_LINK = "public_link"
-METHOD_MANUAL = "manual"
 
 # Options
 OPT_SHOW_CANCELLED = "show_cancelled"
