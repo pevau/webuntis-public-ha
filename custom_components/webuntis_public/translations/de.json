@@ -162,12 +162,6 @@
           }
         }
       },
-      "today_start": {
-        "name": "Schulbeginn heute"
-      },
-      "today_end": {
-        "name": "Schulschluss heute"
-      },
       "school_day_progress": {
         "name": "Schultag-Fortschritt",
         "state_attributes": {
@@ -188,26 +182,6 @@
           },
           "inklusive_pausen": {
             "name": "Inklusive Pausen"
-          }
-        }
-      },
-      "instruction_progress": {
-        "name": "Unterrichtsfortschritt",
-        "state_attributes": {
-          "schulfrei": {
-            "name": "Schulfrei"
-          },
-          "unterricht_minuten_absolviert": {
-            "name": "Unterrichtsminuten absolviert"
-          },
-          "unterricht_minuten_gesamt": {
-            "name": "Unterrichtsminuten gesamt"
-          },
-          "unterricht_minuten_verbleibend": {
-            "name": "Unterrichtsminuten verbleibend"
-          },
-          "pausen_nicht_mitgerechnet": {
-            "name": "Pausen nicht mitgerechnet"
           }
         }
       },
@@ -314,6 +288,33 @@
           },
           "naechste_stunde_beginn": {
             "name": "Beginn nächste Stunde"
+          },
+          "planmaessiger_schulbeginn": {
+            "name": "Planmäßiger Schulbeginn"
+          },
+          "planmaessiger_schulschluss": {
+            "name": "Planmäßiger Schulschluss"
+          },
+          "spaeterer_schulbeginn_minuten": {
+            "name": "Späterer Schulbeginn in Minuten"
+          },
+          "frueherer_schulschluss_minuten": {
+            "name": "Früherer Schulschluss in Minuten"
+          },
+          "erste_stunde_entfaellt": {
+            "name": "Erste Stunde entfällt"
+          },
+          "letzte_stunde_entfaellt": {
+            "name": "Letzte Stunde entfällt"
+          },
+          "unterrichtsfortschritt": {
+            "name": "Unterrichtsfortschritt"
+          },
+          "unterricht_minuten_absolviert": {
+            "name": "Unterrichtsminuten absolviert"
+          },
+          "unterricht_minuten_gesamt": {
+            "name": "Unterrichtsminuten gesamt"
           }
         }
       },
@@ -389,123 +390,9 @@
           },
           "stundenplan": {
             "name": "Stundenplan"
-          }
-        }
-      }
-    },
-    "binary_sensor": {
-      "today_has_changes": {
-        "name": "Stundenplanänderung heute",
-        "state_attributes": {
-          "anzahl": {
-            "name": "Anzahl"
           },
-          "faecher": {
-            "name": "Fächer"
-          }
-        }
-      },
-      "school_free_today": {
-        "name": "Schulfrei heute",
-        "state_attributes": {
-          "geplante_ausgefallene_stunden": {
-            "name": "Geplante ausgefallene Stunden"
-          },
-          "grund": {
-            "name": "Grund",
-            "state": {
-              "no_active_lessons": "Keine stattfindenden Unterrichtsstunden im öffentlichen Stundenplan"
-            }
-          }
-        }
-      },
-      "school_free_tomorrow": {
-        "name": "Schulfrei morgen",
-        "state_attributes": {
-          "geplante_ausgefallene_stunden": {
-            "name": "Geplante ausgefallene Stunden"
-          },
-          "grund": {
-            "name": "Grund",
-            "state": {
-              "no_active_lessons": "Keine stattfindenden Unterrichtsstunden im öffentlichen Stundenplan"
-            }
-          }
-        }
-      },
-      "lesson_running": {
-        "name": "Unterricht läuft",
-        "state_attributes": {
-          "faecher": {
-            "name": "Fächer"
-          },
-          "beginn": {
-            "name": "Beginn"
-          },
-          "ende": {
-            "name": "Ende"
-          }
-        }
-      },
-      "school_starts_later_today": {
-        "name": "Späterer Schulbeginn heute",
-        "state_attributes": {
-          "planmaessiger_beginn": {
-            "name": "Planmäßiger Schulbeginn"
-          },
-          "tatsaechlicher_beginn": {
-            "name": "Tatsächlicher Schulbeginn"
-          },
-          "spaeter_um_minuten": {
-            "name": "Später um Minuten"
-          },
-          "ausgefallene_faecher_davor": {
-            "name": "Ausgefallene Fächer davor"
-          }
-        }
-      },
-      "school_ends_earlier_today": {
-        "name": "Früherer Schulschluss heute",
-        "state_attributes": {
-          "planmaessiger_schluss": {
-            "name": "Planmäßiger Schulschluss"
-          },
-          "tatsaechlicher_schluss": {
-            "name": "Tatsächlicher Schulschluss"
-          },
-          "frueher_um_minuten": {
-            "name": "Früher um Minuten"
-          },
-          "ausgefallene_faecher_danach": {
-            "name": "Ausgefallene Fächer danach"
-          }
-        }
-      },
-      "first_lesson_cancelled_today": {
-        "name": "Erste Stunde entfällt heute",
-        "state_attributes": {
-          "beginn": {
-            "name": "Beginn"
-          },
-          "ende": {
-            "name": "Ende"
-          },
-          "faecher": {
-            "name": "Fächer"
-          }
-        }
-      },
-      "last_lesson_cancelled_today": {
-        "name": "Letzte Stunde entfällt heute",
-        "state_attributes": {
-          "beginn": {
-            "name": "Beginn"
-          },
-          "ende": {
-            "name": "Ende"
-          },
-          "faecher": {
-            "name": "Fächer"
+          "morgen_schulfrei": {
+            "name": "Morgen schulfrei"
           }
         }
       }
