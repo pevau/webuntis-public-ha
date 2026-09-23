@@ -26,6 +26,10 @@ Custom integration for Home Assistant that imports public WebUntis timetables wi
 
 ## Installation with HACS
 
+[![Open your Home Assistant instance and add this repository to HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=pevau&repository=webuntis-public-ha)
+
+Or add the repository manually:
+
 1. In HACS, open **Integrations**.
 2. Add this repository as a **Custom repository** of type **Integration**:
    `https://github.com/pevau/webuntis-public-ha`
