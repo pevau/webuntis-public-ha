@@ -90,6 +90,8 @@ def _extract_public_link(link: str) -> tuple[str, str, int | None]:
     if not value:
         return "", "", None
 
+    if "://" not in value:
+        value = "https://" + value
     parsed = urlparse(value)
     if parsed.scheme not in {"http", "https"} or not parsed.hostname:
         return "", "", None
@@ -115,10 +117,9 @@ def _extract_public_link(link: str) -> tuple[str, str, int | None]:
             try:
                 parsed_id = int(raw_entity)
             except (TypeError, ValueError):
-                return "", "", None
-            if parsed_id <= 0:
-                return "", "", None
-            class_id = parsed_id
+                parsed_id = None
+            if parsed_id is not None and parsed_id > 0:
+                class_id = parsed_id
 
     if fragment_path and not fragment_path.lstrip("/").startswith("basic/timetablePublic"):
         return "", "", None
