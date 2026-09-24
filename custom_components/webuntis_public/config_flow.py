@@ -298,6 +298,114 @@ class WebUntisPublicConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             errors=errors,
         )
 
+    async def async_step_reconfigure(self, user_input=None):
+        """Reconfigure the public WebUntis endpoint and selected classes."""
+        entry = self._get_reconfigure_entry()
+        errors: dict[str, str] = {}
+
+        if user_input is not None:
+            server = _normalise_server(user_input[CONF_SERVER])
+            school = user_input.get(CONF_SCHOOL, "").strip()
+            if not school and server.endswith(".webuntis.com"):
+                school = server.removesuffix(".webuntis.com")
+
+            if not server:
+                errors[CONF_SERVER] = "invalid_server"
+            else:
+                self._server = server
+                self._school = school
+
+                same_school = (
+                    server == entry.data.get(CONF_SERVER)
+                    and school == entry.data.get(CONF_SCHOOL, "")
+                )
+                if same_school:
+                    self._school_name = str(
+                        entry.data.get(CONF_SCHOOL_NAME)
+                        or school
+                        or server
+                    )
+                else:
+                    self._school_name = school or server
+
+                if await self._async_load_classes(errors):
+                    return await self.async_step_reconfigure_classes()
+
+        schema = vol.Schema(
+            {
+                vol.Required(CONF_SERVER): str,
+                vol.Optional(CONF_SCHOOL): str,
+            }
+        )
+        suggested_values = {
+            CONF_SERVER: entry.data.get(CONF_SERVER, ""),
+            CONF_SCHOOL: entry.data.get(CONF_SCHOOL, ""),
+            **(user_input or {}),
+        }
+        return self.async_show_form(
+            step_id="reconfigure",
+            data_schema=self.add_suggested_values_to_schema(
+                schema,
+                suggested_values,
+            ),
+            errors=errors,
+        )
+
+    async def async_step_reconfigure_classes(self, user_input=None):
+        """Select classes for an existing config entry."""
+        entry = self._get_reconfigure_entry()
+        errors: dict[str, str] = {}
+
+        if user_input is not None:
+            selected_ids = [str(value) for value in user_input[CONF_CLASS_IDS]]
+            if not selected_ids:
+                errors[CONF_CLASS_IDS] = "no_class_selected"
+            elif any(class_id not in self._class_names for class_id in selected_ids):
+                errors[CONF_CLASS_IDS] = "invalid_class"
+            else:
+                primary_id = selected_ids[0]
+                primary_name = self._class_names[primary_id]
+                class_names = {
+                    class_id: self._class_names[class_id]
+                    for class_id in selected_ids
+                }
+
+                await self.async_set_unique_id(
+                    f"{self._server}-{primary_id}",
+                    raise_on_progress=False,
+                )
+                self._abort_if_unique_id_mismatch()
+
+                title = self._school_name or self._school or self._server
+                return self.async_update_reload_and_abort(
+                    entry,
+                    data_updates={
+                        CONF_SERVER: self._server,
+                        CONF_SCHOOL: self._school,
+                        CONF_SCHOOL_NAME: self._school_name,
+                        CONF_CLASS_ID: int(primary_id),
+                        CONF_CLASS_NAME: primary_name,
+                        CONF_CLASS_IDS: [int(value) for value in selected_ids],
+                        CONF_CLASS_NAMES: class_names,
+                    },
+                    title=title,
+                )
+
+        configured = entry.data.get(CONF_CLASS_IDS)
+        if not isinstance(configured, (list, tuple)) or not configured:
+            configured = [entry.data.get(CONF_CLASS_ID)]
+        defaults = [
+            str(value)
+            for value in configured
+            if str(value) in self._classes
+        ]
+
+        return self.async_show_form(
+            step_id="reconfigure_classes",
+            data_schema=self._class_select_schema(defaults),
+            errors=errors,
+        )
+
     async def async_step_class_select(self, user_input=None):
         if user_input is not None:
             selected_ids = [str(value) for value in user_input[CONF_CLASS_IDS]]
@@ -334,13 +442,22 @@ class WebUntisPublicConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             data_schema=self._class_select_schema(),
         )
 
-    def _class_select_schema(self) -> vol.Schema:
+    def _class_select_schema(
+        self,
+        default_ids: list[str] | None = None,
+    ) -> vol.Schema:
         options = [
             SelectOptionDict(value=class_id, label=label)
             for class_id, label in self._classes.items()
         ]
         default: list[str] | None = None
-        if self._preselected_class_id in self._classes:
+        if default_ids:
+            valid_defaults = [
+                class_id for class_id in default_ids if class_id in self._classes
+            ]
+            if valid_defaults:
+                default = valid_defaults
+        elif self._preselected_class_id in self._classes:
             default = [self._preselected_class_id]
         key = (
             vol.Required(CONF_CLASS_IDS, default=default)
