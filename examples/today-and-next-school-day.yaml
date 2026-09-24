@@ -88,7 +88,7 @@ cards:
 
       {% if current %}▶️ {% endif %}**{{ as_datetime(stunde['start_time']).strftime('%H:%M') }}
       – {{ as_datetime(stunde['end_time']).strftime('%H:%M') }}**
-      · **{{ stunde.get('fach', '—') }}**
+      · **{{ stunde.get('subject', '—') }}**
       {% if stunde.get('room') %} · 🏫 {{ stunde.get('room') }}{% endif %}
       {% if stunde.get('teachers') %} · 👤 {{ stunde.get('teachers') }}{% endif %}
       {% if stunde.get('changed', false) %} · ⚠️ geändert{% endif %}
@@ -149,7 +149,7 @@ cards:
 
       **{{ as_datetime(stunde['start_time']).strftime('%H:%M') }}
       – {{ as_datetime(stunde['end_time']).strftime('%H:%M') }}**
-      · **{{ stunde.get('fach', '—') }}**
+      · **{{ stunde.get('subject', '—') }}**
       {% if stunde.get('room') %} · 🏫 {{ stunde.get('room') }}{% endif %}
       {% if stunde.get('teachers') %} · 👤 {{ stunde.get('teachers') }}{% endif %}
       {% if stunde.get('changed', false) %} · ⚠️ geändert{% endif %}
