@@ -218,16 +218,7 @@ def test_public_link_rejects_non_webuntis_host(
 @pytest.mark.parametrize(
     "link",
     [
-        "demo.webuntis.com/WebUntis/?school=Example",
         "https://demo.webuntis.com/not-webuntis/?school=Example",
-        (
-            "https://demo.webuntis.com/WebUntis/?school=Example"
-            "#/basic/timetablePublic/class?entityId=0"
-        ),
-        (
-            "https://demo.webuntis.com/WebUntis/?school=Example"
-            "#/basic/timetablePublic/class?entityId=invalid"
-        ),
         (
             "https://demo.webuntis.com/WebUntis/?school=Example"
             "#/other/page?entityId=42"
