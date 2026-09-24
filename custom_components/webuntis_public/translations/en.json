@@ -46,6 +46,21 @@
         "data": {
           "class_ids": "Classes"
         }
+      },
+      "reconfigure": {
+        "title": "Reconfigure WebUntis",
+        "description": "Update the public WebUntis server or technical school name. The available classes will be loaded again.",
+        "data": {
+          "server": "WebUntis server",
+          "school": "Technical school name"
+        }
+      },
+      "reconfigure_classes": {
+        "title": "Select classes",
+        "description": "Select the publicly available classes for this integration.",
+        "data": {
+          "class_ids": "Classes"
+        }
       }
     },
     "error": {
@@ -57,7 +72,8 @@
       "invalid_server": "Invalid WebUntis server.",
       "cannot_load_classes": "The public classes could not be loaded. Check whether the timetable is publicly available.",
       "no_public_classes": "No public classes were found for this school.",
-      "no_class_selected": "Select at least one class."
+      "no_class_selected": "Select at least one class.",
+      "invalid_class": "One or more selected classes are no longer available."
     },
     "abort": {
       "already_configured": "This class is already configured."
