@@ -249,27 +249,21 @@ class WebUntisPublicCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         start_local = self._to_local(start_date, tz)
         end_local = self._to_local(end_date, tz)
         entries: list[dict[str, Any]] = []
-        seen: set[tuple[str, str, str]] = set()
 
         for monday in self._weeks_for_range(start_local, end_local):
             cached = self._weeks.get(monday.isoformat())
             if not cached:
                 continue
-            for entry in cached["entries"]:
-                if not isinstance(entry, dict):
-                    continue
-                duration = entry.get("duration") or {}
-                ids = entry.get("ids") or []
-                key = (
-                    str(duration.get("start") or ""),
-                    str(duration.get("end") or ""),
-                    ",".join(str(value) for value in ids),
-                )
-                if key in seen:
-                    continue
-                seen.add(key)
-                entries.append(entry)
+            entries.extend(
+                entry
+                for entry in cached["entries"]
+                if isinstance(entry, dict)
+            )
 
+        # parse_lessons performs semantic grouping after parsing start/end and
+        # lesson metadata. Avoid deduplicating raw API entries here: WebUntis
+        # may omit technical IDs, and distinct simultaneous lessons must not be
+        # discarded merely because their duration is identical.
         return parse_lessons(entries, start_local, end_local, tz)
 
     async def _async_ensure_range(
