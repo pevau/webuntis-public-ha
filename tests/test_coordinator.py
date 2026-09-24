@@ -375,13 +375,14 @@ def test_cache_exactly_24_hours_old_is_usable_fallback(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     item = _bare_coordinator()
-    fixed_now = datetime.now(UTC)
+    real_datetime = datetime
+    fixed_now = real_datetime.now(UTC)
     cached = {
         "fetched_at": fixed_now - timedelta(hours=24),
         "entries": [{"cached": True}],
     }
 
-    class FixedDateTime(datetime):
+    class FixedDateTime(real_datetime):
         @classmethod
         def now(cls, tz=None):
             return fixed_now if tz is not None else fixed_now.replace(tzinfo=None)
