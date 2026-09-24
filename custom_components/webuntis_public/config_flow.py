@@ -370,15 +370,21 @@ class WebUntisPublicConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     for class_id in selected_ids
                 }
 
-                await self.async_set_unique_id(
-                    f"{self._server}-{primary_id}",
+                new_unique_id = f"{self._server}-{primary_id}"
+                existing_entry = await self.async_set_unique_id(
+                    new_unique_id,
                     raise_on_progress=False,
                 )
-                self._abort_if_unique_id_mismatch()
+                if (
+                    existing_entry is not None
+                    and existing_entry.entry_id != entry.entry_id
+                ):
+                    return self.async_abort(reason="already_configured")
 
                 title = self._school_name or self._school or self._server
                 return self.async_update_reload_and_abort(
                     entry,
+                    unique_id=new_unique_id,
                     data_updates={
                         CONF_SERVER: self._server,
                         CONF_SCHOOL: self._school,
