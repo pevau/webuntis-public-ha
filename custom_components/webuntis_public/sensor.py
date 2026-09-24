@@ -339,7 +339,7 @@ class WebUntisNextSchoolDaySummarySensor(_WebUntisSensorBase):
                 {
                     "start_time": slot[0].isoformat(),
                     "end_time": slot[1].isoformat(),
-                    "fach": slot_subjects(slot),
+                    "subject": slot_subjects(slot),
                     "teachers": slot_teachers(slot),
                     "room": slot_rooms(slot),
                     "changed": slot_changed(slot),
@@ -570,7 +570,7 @@ class WebUntisDailySummarySensor(_WebUntisSensorBase):
                 {
                     "start_time": slot[0].isoformat(),
                     "end_time": slot[1].isoformat(),
-                    "fach": slot_subjects(slot),
+                    "subject": slot_subjects(slot),
                     "teachers": slot_teachers(slot),
                     "room": slot_rooms(slot),
                     "changed": slot_changed(slot),
