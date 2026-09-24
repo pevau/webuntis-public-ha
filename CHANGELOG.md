@@ -3,6 +3,17 @@
 All notable changes to **WebUntis Public Timetable** are documented here.
 
 
+## [0.7.15] - 2026-09-24
+
+### Fixed
+
+- Hardened public timetable link parsing, including links without a URL scheme and invalid class IDs.
+- Improved validation of configured class IDs and setup robustness for multiple classes.
+- Kept coordinator first refreshes sequential to avoid concurrent startup request bursts.
+- Hardened stale-cache handling and timezone-aware cache age comparisons.
+- Improved cleanup of obsolete entities during setup.
+- Fixed the standalone test workflow configuration.
+
 ## [0.7.14] - 2026-09-23
 
 ### Added
