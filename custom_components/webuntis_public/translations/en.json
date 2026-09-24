@@ -132,22 +132,22 @@
           "lesson": "Lesson"
         },
         "state_attributes": {
-          "beginn": {
+          "start_time": {
             "name": "Start"
           },
-          "ende": {
+          "end_time": {
             "name": "End"
           },
-          "raum": {
+          "room": {
             "name": "Room"
           },
-          "lehrer": {
+          "teachers": {
             "name": "Teacher"
           },
-          "geaendert": {
+          "changed": {
             "name": "Changed"
           },
-          "laeuft_gerade": {
+          "in_progress": {
             "name": "In progress"
           }
         }
@@ -158,22 +158,22 @@
           "lesson": "Lesson"
         },
         "state_attributes": {
-          "beginn": {
+          "start_time": {
             "name": "Start"
           },
-          "ende": {
+          "end_time": {
             "name": "End"
           },
-          "raum": {
+          "room": {
             "name": "Room"
           },
-          "lehrer": {
+          "teachers": {
             "name": "Teacher"
           },
-          "geaendert": {
+          "changed": {
             "name": "Changed"
           },
-          "laeuft_gerade": {
+          "in_progress": {
             "name": "In progress"
           }
         }
@@ -181,22 +181,22 @@
       "school_day_progress": {
         "name": "School day progress",
         "state_attributes": {
-          "schulfrei": {
+          "school_free": {
             "name": "No school"
           },
-          "schulbeginn": {
+          "school_start_time": {
             "name": "School starts"
           },
-          "schulschluss": {
+          "school_end_time": {
             "name": "School ends"
           },
-          "vergangen_minuten": {
+          "elapsed_minutes": {
             "name": "Elapsed minutes"
           },
-          "gesamt_minuten": {
+          "total_minutes": {
             "name": "Total minutes"
           },
-          "inklusive_pausen": {
+          "includes_breaks": {
             "name": "Includes breaks"
           }
         }
@@ -210,25 +210,25 @@
           "unavailable": "Unavailable"
         },
         "state_attributes": {
-          "datenquelle": {
+          "data_source": {
             "name": "Data source"
           },
-          "cache_alter_minuten": {
+          "cache_age_minutes": {
             "name": "Cache age in minutes"
           },
-          "cache_wochen": {
+          "cached_weeks": {
             "name": "Cached weeks"
           },
-          "letzter_abrufversuch": {
+          "last_refresh_attempt": {
             "name": "Last refresh attempt"
           },
-          "letzter_fehler": {
+          "last_error": {
             "name": "Last error"
           },
-          "letzter_fehler_zeitpunkt": {
+          "last_error_at": {
             "name": "Last error time"
           },
-          "aufeinanderfolgende_fehler": {
+          "consecutive_failures": {
             "name": "Consecutive errors"
           }
         }
@@ -240,7 +240,7 @@
         "name": "Cached weeks",
         "unit_of_measurement": "weeks",
         "state_attributes": {
-          "wochen": {
+          "weeks": {
             "name": "Weeks"
           }
         }
@@ -248,16 +248,16 @@
       "next_school_day": {
         "name": "Next school day",
         "state_attributes": {
-          "schulbeginn": {
+          "school_start_time": {
             "name": "School starts"
           },
-          "schulschluss": {
+          "school_end_time": {
             "name": "School ends"
           },
-          "stunden": {
+          "lessons": {
             "name": "Lessons"
           },
-          "faecher": {
+          "subjects": {
             "name": "Subjects"
           }
         }
@@ -266,70 +266,70 @@
         "name": "Daily summary",
         "unit_of_measurement": "lessons",
         "state_attributes": {
-          "schulfrei": {
+          "school_free": {
             "name": "No school"
           },
-          "schulbeginn": {
+          "school_start_time": {
             "name": "School starts"
           },
-          "schulschluss": {
+          "school_end_time": {
             "name": "School ends"
           },
-          "faecher": {
+          "subjects": {
             "name": "Subjects"
           },
-          "aenderungen": {
+          "changes": {
             "name": "Changes"
           },
-          "geaenderte_faecher": {
+          "changed_subjects": {
             "name": "Changed subjects"
           },
-          "ausfaelle": {
+          "cancellations": {
             "name": "Cancellations"
           },
-          "ausgefallene_faecher": {
+          "cancelled_subjects": {
             "name": "Cancelled subjects"
           },
-          "fortschritt": {
+          "school_day_progress": {
             "name": "School day progress"
           },
-          "verbleibende_stunden": {
+          "remaining_lessons": {
             "name": "Remaining lessons"
           },
-          "aktuelle_stunde": {
+          "current_lesson": {
             "name": "Current lesson"
           },
-          "naechste_stunde": {
+          "next_lesson": {
             "name": "Next lesson"
           },
-          "naechste_stunde_beginn": {
+          "next_lesson_start_time": {
             "name": "Next lesson starts"
           },
-          "planmaessiger_schulbeginn": {
+          "scheduled_school_start_time": {
             "name": "Scheduled school start"
           },
-          "planmaessiger_schulschluss": {
+          "scheduled_school_end_time": {
             "name": "Scheduled school end"
           },
-          "spaeterer_schulbeginn_minuten": {
+          "late_start_minutes": {
             "name": "Later school start in minutes"
           },
-          "frueherer_schulschluss_minuten": {
+          "early_end_minutes": {
             "name": "Earlier school end in minutes"
           },
-          "erste_stunde_entfaellt": {
+          "first_lesson_cancelled": {
             "name": "First lesson cancelled"
           },
-          "letzte_stunde_entfaellt": {
+          "last_lesson_cancelled": {
             "name": "Last lesson cancelled"
           },
-          "unterrichtsfortschritt": {
+          "instruction_progress": {
             "name": "Teaching progress"
           },
-          "unterricht_minuten_absolviert": {
+          "instruction_elapsed_minutes": {
             "name": "Teaching minutes completed"
           },
-          "unterricht_minuten_gesamt": {
+          "instruction_total_minutes": {
             "name": "Total teaching minutes"
           }
         }
@@ -344,25 +344,25 @@
           "after_school": "After school"
         },
         "state_attributes": {
-          "schulbeginn": {
+          "school_start_time": {
             "name": "School starts"
           },
-          "schulschluss": {
+          "school_end_time": {
             "name": "School ends"
           },
-          "aktuelles_fach": {
+          "current_subject": {
             "name": "Current subject"
           },
-          "aktuelle_stunde_bis": {
+          "current_lesson_end_time": {
             "name": "Current lesson until"
           },
-          "naechstes_fach": {
+          "next_subject": {
             "name": "Next subject"
           },
-          "naechste_stunde_ab": {
+          "next_lesson_start_time": {
             "name": "Next lesson from"
           },
-          "verbleibende_stunden": {
+          "remaining_lessons": {
             "name": "Remaining lessons"
           }
         }
@@ -371,43 +371,43 @@
         "name": "Next school day summary",
         "unit_of_measurement": "lessons",
         "state_attributes": {
-          "datum": {
+          "date": {
             "name": "Date"
           },
-          "tage_bis_dahin": {
+          "days_until": {
             "name": "Days until"
           },
-          "schulbeginn": {
+          "school_start_time": {
             "name": "School starts"
           },
-          "schulschluss": {
+          "school_end_time": {
             "name": "School ends"
           },
-          "faecher": {
+          "subjects": {
             "name": "Subjects"
           },
-          "lehrer": {
+          "teachers": {
             "name": "Teachers"
           },
-          "raeume": {
+          "rooms": {
             "name": "Rooms"
           },
-          "aenderungen": {
+          "changes": {
             "name": "Changes"
           },
-          "geaenderte_faecher": {
+          "changed_subjects": {
             "name": "Changed subjects"
           },
-          "ausfaelle": {
+          "cancellations": {
             "name": "Cancellations"
           },
-          "ausgefallene_faecher": {
+          "cancelled_subjects": {
             "name": "Cancelled subjects"
           },
-          "stundenplan": {
+          "schedule": {
             "name": "Timetable"
           },
-          "morgen_schulfrei": {
+          "no_school_tomorrow": {
             "name": "No school tomorrow"
           }
         }
