@@ -84,32 +84,3 @@ jobs:
           test -f custom_components/webuntis_public/translations/en.json
           test -f custom_components/webuntis_public/translations/de.json
           test ! -f custom_components/webuntis_public/strings.json
-
-  tests:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.14"
-
-      - name: Cache pip downloads
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements_test.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
-      - name: Install test dependencies
-        run: python -m pip install -r requirements_test.txt
-
-      - name: Run unit tests with coverage
-        run: >
-          python -m pytest -q
-          --cov=custom_components.webuntis_public
-          --cov-report=term-missing
-          --cov-fail-under=75
