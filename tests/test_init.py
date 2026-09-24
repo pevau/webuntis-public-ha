@@ -3,6 +3,9 @@ from __future__ import annotations
 import asyncio
 from types import SimpleNamespace
 
+import pytest
+from homeassistant.config_entries import ConfigEntryError
+
 from custom_components.webuntis_public import (
     PLATFORMS,
     _configured_classes,
@@ -81,6 +84,24 @@ def test_configured_classes_removes_duplicates_and_invalid_ids() -> None:
     assert _configured_classes(entry) == [(123, "5A"), (124, "5B")]
 
 
+def test_configured_classes_rejects_invalid_legacy_class_id() -> None:
+    entry = _entry({CONF_CLASS_ID: "invalid", CONF_CLASS_NAME: "5A"})
+
+    assert _configured_classes(entry) == []
+
+
+def test_configured_classes_rejects_non_positive_ids() -> None:
+    entry = _entry(
+        {
+            CONF_CLASS_ID: 123,
+            CONF_CLASS_IDS: [0, -1, None, 124],
+            CONF_CLASS_NAMES: {"124": "5B"},
+        }
+    )
+
+    assert _configured_classes(entry) == [(124, "5B")]
+
+
 def test_configured_classes_uses_primary_legacy_name_when_mapping_missing() -> None:
     entry = _entry(
         {
@@ -122,6 +143,21 @@ def test_migrate_entry_converts_single_class_schema_to_version_3() -> None:
     assert calls[0]["title"] == "Example School"
     assert calls[0]["data"][CONF_CLASS_IDS] == [123]
     assert calls[0]["data"][CONF_CLASS_NAMES] == {"123": "5A"}
+
+
+def test_migrate_entry_rejects_invalid_legacy_class_id() -> None:
+    entry = _entry({CONF_CLASS_ID: "invalid"}, version=2)
+    calls: list[dict] = []
+    hass = SimpleNamespace(
+        config_entries=SimpleNamespace(
+            async_update_entry=lambda target, **kwargs: calls.append(kwargs)
+        )
+    )
+
+    result = asyncio.run(async_migrate_entry(hass, entry))
+
+    assert result is False
+    assert calls == []
 
 
 def test_migrate_entry_preserves_existing_multi_class_values() -> None:
@@ -226,6 +262,19 @@ def test_setup_entry_creates_one_coordinator_per_configured_class(monkeypatch) -
     assert entry.runtime_data == created
     assert forwarded == [(entry, PLATFORMS)]
 
+
+
+def test_setup_entry_rejects_configuration_without_valid_classes() -> None:
+    entry = _entry(
+        {
+            CONF_CLASS_ID: "invalid",
+            CONF_CLASS_IDS: ["invalid", None, 0],
+        }
+    )
+    hass = SimpleNamespace()
+
+    with pytest.raises(ConfigEntryError, match="No valid WebUntis class IDs configured"):
+        asyncio.run(async_setup_entry(hass, entry))
 
 
 def test_remove_obsolete_entities_cleans_registry(monkeypatch) -> None:
