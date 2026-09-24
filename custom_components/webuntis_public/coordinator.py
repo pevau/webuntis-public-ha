@@ -21,8 +21,10 @@ from .const import (
     CONF_SCHOOL,
     CONF_SCHOOL_NAME,
     CONF_SERVER,
+    DEFAULT_EXCLUDE_SUBJECTS,
     DEFAULT_NEXT_LESSON_DAYS,
     DOMAIN,
+    OPT_EXCLUDE_SUBJECTS,
     OPT_NEXT_LESSON_DAYS,
 )
 from .data import WebUntisLesson, as_list, parse_lessons
@@ -264,7 +266,38 @@ class WebUntisPublicCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         # lesson metadata. Avoid deduplicating raw API entries here: WebUntis
         # may omit technical IDs, and distinct simultaneous lessons must not be
         # discarded merely because their duration is identical.
-        return parse_lessons(entries, start_local, end_local, tz)
+        lessons = parse_lessons(entries, start_local, end_local, tz)
+        excluded_subjects = self._excluded_subjects()
+        if not excluded_subjects:
+            return lessons
+
+        return [
+            lesson
+            for lesson in lessons
+            if not any(
+                subject.casefold() in excluded_subjects
+                for subject in (
+                    lesson.subject,
+                    *lesson.subjects,
+                    *lesson.old_subjects,
+                )
+                if subject
+            )
+        ]
+
+    def _excluded_subjects(self) -> set[str]:
+        """Return normalized subject names configured for exclusion."""
+        entry = getattr(self, "entry", None)
+        options = getattr(entry, "options", {}) if entry is not None else {}
+        raw_value = options.get(OPT_EXCLUDE_SUBJECTS, DEFAULT_EXCLUDE_SUBJECTS)
+        if not isinstance(raw_value, str):
+            return set()
+
+        return {
+            value.strip().casefold()
+            for value in raw_value.replace("\n", ",").split(",")
+            if value.strip()
+        }
 
     async def _async_ensure_range(
         self,
