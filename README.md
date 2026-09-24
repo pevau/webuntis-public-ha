@@ -52,6 +52,39 @@ The integration can be configured by:
 
 After selecting the school, choose one or more public classes. No WebUntis account is required as long as the school has enabled public timetable access.
 
+## Entities and data model
+
+Each configured class is represented as its own Home Assistant device. The integration provides:
+
+- one timetable calendar,
+- sensors for current lesson, next lesson, school status, next school day, daily summary, next-school-day summary and school-day progress,
+- diagnostic sensors for data source, last successful update and cached weeks,
+- a manual refresh button,
+- a timetable-change event entity.
+
+Diagnostic/noisy entities can be disabled by default where appropriate. Stable English attribute keys are used internally so automations remain independent of the Home Assistant display language.
+
+## Data updates and caching
+
+The integration uses a central Home Assistant `DataUpdateCoordinator` with a 10-minute polling interval. Time-sensitive sensor values such as the current lesson or school-day progress are calculated locally and do not trigger extra WebUntis requests.
+
+Fetched timetable weeks are cached persistently. If WebUntis is temporarily unavailable, a recent cached week can be used as a fallback. Old cache entries are discarded automatically, and manual refresh bypasses the normal cache TTL once.
+
+## Known limitations
+
+- A school must expose its timetable publicly. Schools without public timetable access cannot be used without authentication.
+- The integration depends on the public WebUntis endpoints and their currently observed response formats; undocumented upstream API changes may require an integration update.
+- Public timetable data differs between schools. Some schools may not publish full teacher names, room information or substitution details.
+- Changes are detected semantically from the public timetable data. WebUntis does not expose a dedicated change-feed for this integration.
+
+## Troubleshooting
+
+If setup cannot find classes, first verify in a normal browser that the school's public WebUntis timetable works without logging in. For manual setup, verify the WebUntis server and technical school name.
+
+If data temporarily stops updating, check the diagnostic entities and download Home Assistant diagnostics for the config entry. The integration reports whether data currently comes from WebUntis, the normal cache or stale-cache fallback.
+
+After updating through HACS, restart Home Assistant before troubleshooting an old behavior. If an issue persists, include the integration version, Home Assistant version and diagnostics when opening a GitHub issue.
+
 ## Languages
 
 The integration currently includes:

@@ -288,3 +288,7 @@ def test_day_bounds_uses_home_assistant_timezone(monkeypatch: pytest.MonkeyPatch
 
     assert start.isoformat() == "2026-09-24T00:00:00+02:00"
     assert end.isoformat() == "2026-09-25T00:00:00+02:00"
+
+
+def test_instruction_total_seconds_is_zero_without_lessons() -> None:
+    assert schedule.instruction_total_seconds([]) == 0

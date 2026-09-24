@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
+from unittest.mock import AsyncMock
 
 import pytest
 
@@ -535,3 +536,121 @@ def test_entity_availability_follows_coordinator() -> None:
     assert sensor.available is True
     coordinator.last_update_success = False
     assert sensor.available is False
+
+
+def test_calendar_setup_registers_one_entity_per_class(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    coordinators = [FakeCoordinator(), FakeCoordinator()]
+    coordinators[1].device_identifier = "example.webuntis.com-124"
+    entry = _entry(runtime_data=coordinators)
+    hass = SimpleNamespace(config=SimpleNamespace(language="en"))
+    added = []
+
+    monkeypatch.setattr(
+        calendar_module,
+        "async_get_translations",
+        AsyncMock(return_value=_translations()),
+    )
+
+    asyncio.run(calendar_module.async_setup_entry(hass, entry, added.extend))
+
+    assert len(added) == 2
+    assert {entity.unique_id for entity in added} == {
+        "example.webuntis.com-123",
+        "example.webuntis.com-124",
+    }
+
+
+def test_calendar_language_change_refreshes_translations(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    coordinator = FakeCoordinator()
+    calendar = calendar_module.WebUntisPublicCalendar(
+        _entry(),
+        coordinator,
+        _translations(),
+    )
+    calendar._language = "de"
+    refreshed = {
+        "component.webuntis_public.common.calendar.lesson": "Lesson",
+    }
+
+    get_translations = AsyncMock(return_value=refreshed)
+    monkeypatch.setattr(calendar_module, "async_get_translations", get_translations)
+    written = []
+    monkeypatch.setattr(calendar, "async_write_ha_state", lambda: written.append(True))
+
+    asyncio.run(
+        calendar._async_core_config_updated(
+            SimpleNamespace(data={"language": "en"})
+        )
+    )
+
+    assert calendar._language == "en"
+    assert calendar._translations == refreshed
+    assert written == [True]
+    get_translations.assert_awaited_once_with(
+        calendar.hass,
+        "en",
+        "common",
+        {"webuntis_public"},
+    )
+
+
+def test_calendar_language_change_ignores_missing_or_same_language(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calendar = calendar_module.WebUntisPublicCalendar(
+        _entry(),
+        FakeCoordinator(),
+        _translations(),
+    )
+    calendar._language = "de"
+    get_translations = AsyncMock()
+    monkeypatch.setattr(calendar_module, "async_get_translations", get_translations)
+
+    asyncio.run(
+        calendar._async_core_config_updated(SimpleNamespace(data={}))
+    )
+    asyncio.run(
+        calendar._async_core_config_updated(
+            SimpleNamespace(data={"language": "de"})
+        )
+    )
+
+    get_translations.assert_not_awaited()
+
+
+def test_calendar_event_property_returns_first_visible_upcoming_lesson(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    lessons = [
+        _lesson(0, 45, subject="Mathematik"),
+        _lesson(60, 105, subject="Deutsch"),
+    ]
+    calendar = calendar_module.WebUntisPublicCalendar(
+        _entry(),
+        FakeCoordinator(lessons),
+        _translations(),
+    )
+    monkeypatch.setattr(calendar_module.dt_util, "now", lambda: BASE)
+
+    event = calendar.event
+
+    assert event is not None
+    assert event.summary == "Mathematik"
+    assert event.start == BASE
+
+
+def test_calendar_event_property_returns_none_without_visible_lessons(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calendar = calendar_module.WebUntisPublicCalendar(
+        _entry({OPT_SHOW_CANCELLED: False}),
+        FakeCoordinator([_lesson(0, 45, status="CANCEL")]),
+        _translations(),
+    )
+    monkeypatch.setattr(calendar_module.dt_util, "now", lambda: BASE)
+
+    assert calendar.event is None
