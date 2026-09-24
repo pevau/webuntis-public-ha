@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 import pytest
 
@@ -16,6 +17,56 @@ from custom_components.webuntis_public.data import WebUntisLesson, as_list, pars
 UTC = timezone.utc
 DAY_START = datetime(2026, 9, 23, 0, 0, tzinfo=UTC)
 DAY_END = DAY_START + timedelta(days=1)
+
+
+def test_parse_lessons_converts_utc_across_dst_start() -> None:
+    tz = ZoneInfo("Europe/Vienna")
+    entry = _entry(
+        start="2026-03-29T00:30:00+00:00",
+        end="2026-03-29T01:30:00+00:00",
+        subject=_element("SUBJECT", long_name="DST"),
+    )
+
+    lessons = parse_lessons(
+        [entry],
+        datetime(2026, 3, 29, 0, 0, tzinfo=tz),
+        datetime(2026, 3, 29, 5, 0, tzinfo=tz),
+        tz,
+    )
+
+    assert len(lessons) == 1
+    assert lessons[0].start.isoformat() == "2026-03-29T01:30:00+01:00"
+    assert lessons[0].end.isoformat() == "2026-03-29T03:30:00+02:00"
+
+
+def test_parse_lessons_converts_utc_across_dst_end() -> None:
+    tz = ZoneInfo("Europe/Vienna")
+    entries = [
+        _entry(
+            start="2026-10-25T00:30:00+00:00",
+            end="2026-10-25T00:45:00+00:00",
+            subject=_element("SUBJECT", long_name="DST first"),
+        ),
+        _entry(
+            start="2026-10-25T01:30:00+00:00",
+            end="2026-10-25T01:45:00+00:00",
+            subject=_element("SUBJECT", long_name="DST second"),
+        ),
+    ]
+
+    lessons = parse_lessons(
+        entries,
+        datetime(2026, 10, 25, 0, 0, tzinfo=tz),
+        datetime(2026, 10, 25, 5, 0, tzinfo=tz),
+        tz,
+    )
+
+    assert [lesson.start.isoformat() for lesson in lessons] == [
+        "2026-10-25T02:30:00+02:00",
+        "2026-10-25T02:30:00+01:00",
+    ]
+    assert lessons[0].start.fold == 0
+    assert lessons[1].start.fold == 1
 
 
 def _element(
