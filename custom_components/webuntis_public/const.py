@@ -20,6 +20,7 @@ OPT_SHOW_TEACHER = "show_teacher"
 OPT_SHOW_ROOM = "show_room"
 OPT_SHOW_CLASS = "show_class"
 OPT_NEXT_LESSON_DAYS = "next_lesson_days"
+OPT_EXCLUDE_SUBJECTS = "exclude_subjects"
 
 TITLE_SUBJECT = "subject"
 TITLE_SUBJECT_ROOM = "subject_room"
@@ -32,3 +33,4 @@ DEFAULT_SHOW_TEACHER = True
 DEFAULT_SHOW_ROOM = True
 DEFAULT_SHOW_CLASS = True
 DEFAULT_NEXT_LESSON_DAYS = 14
+DEFAULT_EXCLUDE_SUBJECTS = ""
