@@ -459,6 +459,47 @@ def test_async_fetch_week_rejects_unexpected_response_format() -> None:
         asyncio.run(item._async_fetch_week(Date(2026, 9, 21)))
 
 
+@pytest.mark.parametrize(
+    ("payload", "message"),
+    [
+        ({}, "Unexpected WebUntis response format"),
+        ({"error": "not authorized"}, "Unexpected WebUntis response format"),
+        ({"days": {}}, "Unexpected WebUntis days format"),
+        ({"days": ["invalid"]}, "Unexpected WebUntis day format"),
+        (
+            {"days": [{"gridEntries": "invalid"}]},
+            "Unexpected WebUntis gridEntries format",
+        ),
+        (
+            {"days": [{"gridEntries": ["invalid"]}]},
+            "Unexpected WebUntis timetable entry format",
+        ),
+    ],
+)
+def test_async_fetch_week_rejects_malformed_timetable_structure(
+    payload,
+    message: str,
+) -> None:
+    item = _bare_coordinator()
+    item.server = "example.webuntis.com"
+    item.school = None
+    item.class_id = 123
+    item._session = FakeSession(FakeResponse(payload))
+
+    with pytest.raises(ValueError, match=message):
+        asyncio.run(item._async_fetch_week(Date(2026, 9, 21)))
+
+
+def test_async_fetch_week_accepts_legitimate_empty_days() -> None:
+    item = _bare_coordinator()
+    item.server = "example.webuntis.com"
+    item.school = None
+    item.class_id = 123
+    item._session = FakeSession(FakeResponse({"days": []}))
+
+    assert asyncio.run(item._async_fetch_week(Date(2026, 9, 21))) == []
+
+
 def test_setup_loads_recent_valid_cache_and_ignores_old_entries() -> None:
     item = _bare_coordinator()
     now = datetime.now(UTC)
