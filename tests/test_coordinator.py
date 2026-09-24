@@ -312,6 +312,47 @@ def test_retry_failure_uses_stale_cache(monkeypatch: pytest.MonkeyPatch) -> None
     assert item._weeks[monday.isoformat()]["entries"] is cached_entries
 
 
+def test_retry_failure_rejects_cache_older_than_24_hours(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    item = _bare_coordinator()
+    monday = Date(2026, 9, 21)
+    item._weeks[monday.isoformat()] = {
+        "fetched_at": datetime.now(UTC) - timedelta(hours=24, seconds=1),
+        "entries": [{"cached": True}],
+    }
+    monkeypatch.setattr(item, "_is_stale", lambda *_args: True)
+    monkeypatch.setattr(
+        item,
+        "_async_fetch_week",
+        AsyncMock(side_effect=FakeClientResponseError(503)),
+    )
+    monkeypatch.setattr(coordinator_module.asyncio, "sleep", AsyncMock())
+
+    with pytest.raises(WebUntisTemporaryUnavailable, match="HTTP 503"):
+        asyncio.run(item._async_refresh_week_if_needed(monday))
+
+
+def test_cache_exactly_24_hours_old_is_usable_fallback(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    item = _bare_coordinator()
+    fixed_now = datetime.now(UTC)
+    cached = {
+        "fetched_at": fixed_now - timedelta(hours=24),
+        "entries": [{"cached": True}],
+    }
+
+    class FixedDateTime(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return fixed_now if tz is not None else fixed_now.replace(tzinfo=None)
+
+    monkeypatch.setattr(coordinator_module, "datetime", FixedDateTime)
+
+    assert item._cache_is_usable_fallback(cached) is True
+
+
 def test_successful_refresh_records_detected_change(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
