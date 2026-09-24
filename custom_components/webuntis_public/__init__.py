@@ -49,17 +49,26 @@ def _remove_obsolete_entities(
 ) -> None:
     """Remove entity-registry entries replaced by the compact entity model."""
     registry = er.async_get(hass)
-    obsolete_unique_ids = {
-        f"{coordinator.device_identifier}-{key}"
-        for coordinator in coordinators
-        for key in OBSOLETE_ENTITY_KEYS
-    }
+    device_prefixes = tuple(
+        f"{coordinator.device_identifier}-" for coordinator in coordinators
+    )
+
     for entity in list(registry.entities.values()):
-        if (
-            entity.config_entry_id == entry.entry_id
-            and entity.unique_id in obsolete_unique_ids
-        ):
+        if entity.config_entry_id != entry.entry_id:
+            continue
+
+        unique_id = str(entity.unique_id)
+        suffix = unique_id.rsplit("-", 1)[-1]
+        if suffix not in OBSOLETE_ENTITY_KEYS:
+            continue
+
+        # The config entry already scopes ownership to this integration instance.
+        # Keep the current-device check only as an additional fast-path; obsolete
+        # entities from classes removed from the configuration must be cleaned too.
+        if device_prefixes and unique_id.startswith(device_prefixes):
             registry.async_remove(entity.entity_id)
+            continue
+        registry.async_remove(entity.entity_id)
 
 
 def _valid_class_id(value: Any) -> int | None:
