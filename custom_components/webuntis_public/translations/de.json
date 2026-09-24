@@ -91,7 +91,8 @@
           "show_teacher": "Lehrer in Termindetails anzeigen",
           "show_room": "Raum in Termindetails und als Ort anzeigen",
           "show_class": "Klasse in Termindetails anzeigen",
-          "next_lesson_days": "Suchzeitraum für „Nächste Stunde“"
+          "next_lesson_days": "Suchzeitraum für „Nächste Stunde“",
+          "exclude_subjects": "Fächer ausschließen"
         },
         "data_description": {
           "class_ids": "Alle ausgewählten Klassen erhalten jeweils einen eigenen Kalender sowie eigene Sensoren.",
@@ -100,7 +101,8 @@
           "show_teacher": "Zeigt Lehrkraft bzw. Lehrkräfte in der Beschreibung des Termins.",
           "show_room": "Zeigt den Raum in den Termindetails und als Kalender-Ort.",
           "show_class": "Zeigt die ausgewählte Klasse in der Terminbeschreibung.",
-          "next_lesson_days": "Wie viele Tage voraus nach der nächsten Unterrichtsstunde gesucht wird."
+          "next_lesson_days": "Wie viele Tage voraus nach der nächsten Unterrichtsstunde gesucht wird.",
+          "exclude_subjects": "Kommagetrennt oder ein Fach pro Zeile. Der Abgleich ist exakt, ignoriert Groß-/Kleinschreibung und entfernt passende Fächer aus Kalendern und Sensoren."
         }
       }
     },
