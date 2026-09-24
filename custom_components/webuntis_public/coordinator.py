@@ -433,14 +433,29 @@ class WebUntisPublicCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             raw = await response.json(content_type=None)
 
         entries: list[dict[str, Any]] = []
-        if not isinstance(raw, dict):
+        if not isinstance(raw, dict) or "days" not in raw:
             raise ValueError("Unexpected WebUntis response format")
-        for day in as_list(raw.get("days")):
+
+        days = raw["days"]
+        if not isinstance(days, list):
+            raise ValueError("Unexpected WebUntis days format")
+
+        for day in days:
             if not isinstance(day, dict):
+                raise ValueError("Unexpected WebUntis day format")
+
+            grid_entries = day.get("gridEntries")
+            if grid_entries is None:
                 continue
-            for entry in as_list(day.get("gridEntries")):
-                if isinstance(entry, dict):
-                    entries.append(entry)
+            if isinstance(grid_entries, dict):
+                grid_entries = [grid_entries]
+            elif not isinstance(grid_entries, list):
+                raise ValueError("Unexpected WebUntis gridEntries format")
+
+            for entry in grid_entries:
+                if not isinstance(entry, dict):
+                    raise ValueError("Unexpected WebUntis timetable entry format")
+                entries.append(entry)
 
         _LOGGER.debug("Fetched %d WebUntis entries for week %s", len(entries), monday)
         return entries
