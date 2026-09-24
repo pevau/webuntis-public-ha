@@ -183,7 +183,7 @@ def test_current_lesson_sensor_reports_no_lesson(
     monkeypatch.setattr(sensor_module, "local_now", lambda _hass: BASE)
 
     assert sensor.native_value == "no_lesson"
-    assert sensor.extra_state_attributes == {"laeuft_gerade": False}
+    assert sensor.extra_state_attributes == {"in_progress": False}
 
 
 def test_next_lesson_sensor_reports_future_lesson(
@@ -316,8 +316,8 @@ def test_school_day_progress_reports_school_free() -> None:
 
     assert sensor.native_value is None
     assert sensor.extra_state_attributes == {
-        "schulfrei": True,
-        "inklusive_pausen": True,
+        "school_free": True,
+        "includes_breaks": True,
     }
 
 
