@@ -91,7 +91,8 @@
           "show_teacher": "Show teacher in event details",
           "show_room": "Show room in event details and as location",
           "show_class": "Show class in event details",
-          "next_lesson_days": "Search range for “Next lesson”"
+          "next_lesson_days": "Search range for “Next lesson”",
+          "exclude_subjects": "Exclude subjects"
         },
         "data_description": {
           "class_ids": "Each selected class gets its own calendar and sensors.",
@@ -100,7 +101,8 @@
           "show_teacher": "Shows the teacher or teachers in the event description.",
           "show_room": "Shows the room in the event details and as the calendar location.",
           "show_class": "Shows the selected class in the event description.",
-          "next_lesson_days": "How many days ahead to search for the next lesson."
+          "next_lesson_days": "How many days ahead to search for the next lesson.",
+          "exclude_subjects": "Comma-separated or one per line. Matching is exact and case-insensitive; excluded subjects are removed from calendars and sensors."
         }
       }
     },
