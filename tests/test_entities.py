@@ -293,6 +293,8 @@ def test_next_school_day_summary_combines_future_day_information() -> None:
     assert attrs["cancellations"] == 1
     assert attrs["cancelled_subjects"] == ["Sport"]
     assert len(attrs["schedule"]) == 2
+    assert attrs["schedule"][0]["subject"] == "Mathematik"
+    assert attrs["schedule"][1]["subject"] == "Deutsch"
     assert attrs["schedule"][1]["changed"] is True
 
 
@@ -351,6 +353,8 @@ def test_daily_summary_combines_day_information(
     assert attrs["instruction_progress"] == 22.2
     assert attrs["instruction_elapsed_minutes"] == 20
     assert attrs["instruction_total_minutes"] == 90
+    assert attrs["schedule"][0]["subject"] == "Mathematik"
+    assert attrs["schedule"][1]["subject"] == "Deutsch"
 
 
 @pytest.mark.parametrize(
