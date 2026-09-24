@@ -744,14 +744,8 @@ def test_reconfigure_updates_entry_and_reloads(
     flow._classes = {"124": "5B", "125": "5C"}
     flow._class_names = {"124": "5B", "125": "5C"}
 
-    set_unique_id = AsyncMock()
+    set_unique_id = AsyncMock(return_value=None)
     monkeypatch.setattr(flow, "async_set_unique_id", set_unique_id)
-    mismatch_checks: list[bool] = []
-    monkeypatch.setattr(
-        flow,
-        "_abort_if_unique_id_mismatch",
-        lambda: mismatch_checks.append(True),
-    )
     updates: list[dict] = []
     monkeypatch.setattr(
         flow,
@@ -774,10 +768,10 @@ def test_reconfigure_updates_entry_and_reloads(
         "new.webuntis.com-125",
         raise_on_progress=False,
     )
-    assert mismatch_checks == [True]
     assert result["type"] == "abort"
     assert result["target"] is entry
     assert result["title"] == "New School"
+    assert result["unique_id"] == "new.webuntis.com-125"
     assert result["data_updates"] == {
         CONF_SERVER: "new.webuntis.com",
         CONF_SCHOOL: "new-school",
@@ -804,3 +798,31 @@ def test_reconfigure_requires_at_least_one_class(
     )
 
     assert result["errors"] == {CONF_CLASS_IDS: "no_class_selected"}
+
+
+def test_reconfigure_aborts_when_target_unique_id_belongs_to_other_entry(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    flow, _entry = _reconfigure_flow(monkeypatch)
+    flow._server = "new.webuntis.com"
+    flow._school = "new-school"
+    flow._school_name = "New School"
+    flow._classes = {"125": "5C"}
+    flow._class_names = {"125": "5C"}
+
+    monkeypatch.setattr(
+        flow,
+        "async_set_unique_id",
+        AsyncMock(return_value=SimpleNamespace(entry_id="entry-2")),
+    )
+    monkeypatch.setattr(
+        flow,
+        "async_abort",
+        lambda **kwargs: {"type": "abort", **kwargs},
+    )
+
+    result = asyncio.run(
+        flow.async_step_reconfigure_classes({CONF_CLASS_IDS: ["125"]})
+    )
+
+    assert result == {"type": "abort", "reason": "already_configured"}
