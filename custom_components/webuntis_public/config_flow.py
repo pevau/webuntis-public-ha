@@ -86,25 +86,44 @@ def _normalise_server(value: str) -> str:
 
 def _extract_public_link(link: str) -> tuple[str, str, int | None]:
     """Return server, school and optional class id from a public WebUntis URL."""
-    parsed = urlparse(link.strip())
-    server = _normalise_server(parsed.netloc or parsed.path)
+    value = link.strip()
+    if not value:
+        return "", "", None
+
+    parsed = urlparse(value)
+    if parsed.scheme not in {"http", "https"} or not parsed.hostname:
+        return "", "", None
+
+    server = parsed.hostname.strip().lower()
+    if not server.endswith(".webuntis.com"):
+        return "", "", None
+
+    path = parsed.path.rstrip("/").lower()
+    if path not in {"/webuntis", "/webuntis/"} and not path.startswith("/webuntis/"):
+        return "", "", None
 
     query = parse_qs(parsed.query)
     school = unquote(query.get("school", [""])[0]).strip()
 
     class_id: int | None = None
     fragment = parsed.fragment or ""
-    if "?" in fragment:
-        _, fragment_query = fragment.split("?", 1)
+    fragment_path, separator, fragment_query = fragment.partition("?")
+    if separator:
         fragment_params = parse_qs(fragment_query)
         raw_entity = fragment_params.get("entityId", [None])[0]
         if raw_entity is not None:
             try:
-                class_id = int(raw_entity)
+                parsed_id = int(raw_entity)
             except (TypeError, ValueError):
-                class_id = None
+                return "", "", None
+            if parsed_id <= 0:
+                return "", "", None
+            class_id = parsed_id
 
-    if not school and server.endswith(".webuntis.com"):
+    if fragment_path and not fragment_path.lstrip("/").startswith("basic/timetablePublic"):
+        return "", "", None
+
+    if not school:
         school = server.removesuffix(".webuntis.com")
 
     return server, school, class_id
