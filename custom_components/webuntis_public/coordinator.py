@@ -420,7 +420,7 @@ class WebUntisPublicCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             fetched_at = fetched_at.replace(tzinfo=timezone.utc)
         else:
             fetched_at = fetched_at.astimezone(timezone.utc)
-        return datetime.now(timezone.utc) - fetched_at <= MAX_STALE_CACHE_AGE
+        return dt_util.utcnow() - fetched_at <= MAX_STALE_CACHE_AGE
 
     async def _async_fetch_week(self, monday: Date) -> list[dict[str, Any]]:
         saturday = monday + timedelta(days=5)
