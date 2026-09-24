@@ -21,6 +21,7 @@ from homeassistant.helpers.selector import (
 from webuntis_public import WebUntisPublicClient
 
 from .const import (
+    DEFAULT_EXCLUDE_SUBJECTS,
     DEFAULT_NEXT_LESSON_DAYS,
     DEFAULT_SHOW_CANCELLED,
     DEFAULT_SHOW_CLASS,
@@ -38,6 +39,7 @@ from .const import (
     CONF_SEARCH_QUERY,
     CONF_SERVER,
     DOMAIN,
+    OPT_EXCLUDE_SUBJECTS,
     OPT_NEXT_LESSON_DAYS,
     OPT_SHOW_CANCELLED,
     OPT_SHOW_CLASS,
@@ -588,6 +590,10 @@ class WebUntisPublicOptionsFlow(config_entries.OptionsFlowWithReload):
                         multiple=True,
                     )
                 ),
+                vol.Optional(
+                    OPT_EXCLUDE_SUBJECTS,
+                    default=current.get(OPT_EXCLUDE_SUBJECTS, DEFAULT_EXCLUDE_SUBJECTS),
+                ): str,
                 vol.Required(
                     OPT_TITLE_FORMAT,
                     default=current.get(OPT_TITLE_FORMAT, DEFAULT_TITLE_FORMAT),
