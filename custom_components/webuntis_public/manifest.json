@@ -11,6 +11,6 @@
   ],
   "codeowners": [
     "@pevau"
-  ]
+  ],
+  "integration_type": "service"
 }
-
