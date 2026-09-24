@@ -620,3 +620,37 @@ def test_calendar_language_change_ignores_missing_or_same_language(
     )
 
     get_translations.assert_not_awaited()
+
+
+def test_calendar_event_property_returns_first_visible_upcoming_lesson(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    lessons = [
+        _lesson(0, 45, subject="Mathematik"),
+        _lesson(60, 105, subject="Deutsch"),
+    ]
+    calendar = calendar_module.WebUntisPublicCalendar(
+        _entry(),
+        FakeCoordinator(lessons),
+        _translations(),
+    )
+    monkeypatch.setattr(calendar_module.dt_util, "now", lambda: BASE)
+
+    event = calendar.event
+
+    assert event is not None
+    assert event.summary == "Mathematik"
+    assert event.start == BASE
+
+
+def test_calendar_event_property_returns_none_without_visible_lessons(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calendar = calendar_module.WebUntisPublicCalendar(
+        _entry({OPT_SHOW_CANCELLED: False}),
+        FakeCoordinator([_lesson(0, 45, status="CANCEL")]),
+        _translations(),
+    )
+    monkeypatch.setattr(calendar_module.dt_util, "now", lambda: BASE)
+
+    assert calendar.event is None
