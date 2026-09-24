@@ -12,5 +12,5 @@
   "codeowners": [
     "@pevau"
   ],
-  "integration_type": "service"
+  "integration_type": "hub"
 }
