@@ -10,6 +10,7 @@ import pytest
 from aiohttp import ClientError, ClientResponseError
 
 from custom_components.webuntis_public import coordinator as coordinator_module
+from custom_components.webuntis_public.const import OPT_EXCLUDE_SUBJECTS
 from custom_components.webuntis_public.coordinator import (
     RETRY_DELAYS,
     WebUntisPublicCoordinator,
@@ -190,6 +191,32 @@ def test_cached_lessons_keeps_distinct_entries_without_ids() -> None:
 
     assert len(lessons) == 2
     assert {lesson.subject for lesson in lessons} == {"Mathematik", "Englisch"}
+
+
+def test_cached_lessons_excludes_configured_subjects_case_insensitively() -> None:
+    item = _bare_coordinator()
+    item.hass = SimpleNamespace(config=SimpleNamespace(time_zone="Europe/Vienna"))
+    item.entry = SimpleNamespace(
+        options={OPT_EXCLUDE_SUBJECTS: " mathematik,\nRELIGION "}
+    )
+    monday = Date(2026, 9, 21)
+    start = datetime(2026, 9, 21, 8, 0, tzinfo=UTC)
+    end = datetime(2026, 9, 21, 8, 45, tzinfo=UTC)
+    item._weeks[monday.isoformat()] = {
+        "fetched_at": datetime.now(UTC),
+        "entries": [
+            _entry(start, end, subject="Mathematik"),
+            _entry(start + timedelta(hours=1), end + timedelta(hours=1), subject="Englisch"),
+            _entry(start + timedelta(hours=2), end + timedelta(hours=2), subject="Religion"),
+        ],
+    }
+
+    lessons = item.cached_lessons_between(
+        datetime(2026, 9, 21, 7, 0, tzinfo=UTC),
+        datetime(2026, 9, 21, 12, 0, tzinfo=UTC),
+    )
+
+    assert [lesson.subject for lesson in lessons] == ["Englisch"]
 
 
 def test_parse_utc_normalizes_naive_and_offset_datetimes() -> None:
