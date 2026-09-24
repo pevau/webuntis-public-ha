@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from functools import partial
 from typing import Any
 from urllib.parse import parse_qs, unquote, urlparse
 
@@ -126,6 +127,18 @@ def _find_school_dicts(value: Any) -> list[dict[str, Any]]:
             for item in value.values():
                 found.extend(_find_school_dicts(item))
     return found
+
+
+def _list_public_classes(server: str, school: str | None):
+    """Load public WebUntis classes using the synchronous client."""
+    return WebUntisPublicClient(server, school=school or None).list_classes()
+
+
+async def _async_list_public_classes(hass, server: str, school: str | None):
+    """Run the synchronous WebUntis class lookup outside the event loop."""
+    return await hass.async_add_executor_job(
+        partial(_list_public_classes, server, school)
+    )
 
 
 def _school_from_record(record: dict[str, Any]) -> SchoolResult | None:
@@ -324,7 +337,11 @@ class WebUntisPublicConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def _async_load_classes(self, errors: dict[str, str]) -> bool:
         try:
-            classes = await self.hass.async_add_executor_job(self._list_classes)
+            classes = await _async_list_public_classes(
+                self.hass,
+                self._server,
+                self._school or None,
+            )
         except Exception:
             errors["base"] = "cannot_load_classes"
             return False
@@ -344,10 +361,6 @@ class WebUntisPublicConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self._classes[cid] = label
             self._class_names[cid] = name
         return True
-
-    def _list_classes(self):
-        client = WebUntisPublicClient(self._server, school=self._school or None)
-        return client.list_classes()
 
     async def _async_search_schools(self, query: str) -> list[SchoolResult]:
         session = async_get_clientsession(self.hass)
@@ -481,11 +494,8 @@ class WebUntisPublicOptionsFlow(config_entries.OptionsFlowWithReload):
         server = self.config_entry.data[CONF_SERVER]
         school = self.config_entry.data.get(CONF_SCHOOL) or None
 
-        def load():
-            return WebUntisPublicClient(server, school=school).list_classes()
-
         try:
-            classes = await self.hass.async_add_executor_job(load)
+            classes = await _async_list_public_classes(self.hass, server, school)
         except Exception:
             classes = []
 
