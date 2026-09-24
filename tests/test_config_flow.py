@@ -5,6 +5,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from custom_components.webuntis_public import config_flow as config_module
 from custom_components.webuntis_public.config_flow import (
     SchoolResult,
     WebUntisPublicConfigFlow,
@@ -192,13 +193,13 @@ def test_class_select_schema_does_not_preselect_unknown_class() -> None:
         schema({})
 
 
-def test_async_load_classes_sorts_and_builds_long_labels() -> None:
+def test_async_load_classes_sorts_and_builds_long_labels(monkeypatch: pytest.MonkeyPatch) -> None:
     flow = WebUntisPublicConfigFlow()
-    flow._list_classes = lambda: [
+    monkeypatch.setattr(config_module, "_list_public_classes", lambda *_args: [
         SimpleNamespace(id=2, name="5B", long_name="Klasse 5B"),
         SimpleNamespace(id=1, name="5A", long_name="Klasse 5A"),
         SimpleNamespace(id=3, name="6A", long_name="6A"),
-    ]
+    ])
     flow.hass = SimpleNamespace(
         async_add_executor_job=lambda func: asyncio.to_thread(func)
     )
@@ -221,9 +222,9 @@ def test_async_load_classes_sorts_and_builds_long_labels() -> None:
     }
 
 
-def test_async_load_classes_reports_empty_public_classes() -> None:
+def test_async_load_classes_reports_empty_public_classes(monkeypatch: pytest.MonkeyPatch) -> None:
     flow = WebUntisPublicConfigFlow()
-    flow._list_classes = lambda: []
+    monkeypatch.setattr(config_module, "_list_public_classes", lambda *_args: [])
     flow.hass = SimpleNamespace(
         async_add_executor_job=lambda func: asyncio.to_thread(func)
     )
@@ -235,13 +236,13 @@ def test_async_load_classes_reports_empty_public_classes() -> None:
     assert errors == {"base": "no_public_classes"}
 
 
-def test_async_load_classes_reports_connection_error() -> None:
+def test_async_load_classes_reports_connection_error(monkeypatch: pytest.MonkeyPatch) -> None:
     flow = WebUntisPublicConfigFlow()
 
-    def fail():
+    def fail(*_args):
         raise RuntimeError("boom")
 
-    flow._list_classes = fail
+    monkeypatch.setattr(config_module, "_list_public_classes", fail)
     flow.hass = SimpleNamespace(
         async_add_executor_job=lambda func: asyncio.to_thread(func)
     )
