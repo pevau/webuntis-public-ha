@@ -33,6 +33,7 @@ UPDATE_INTERVAL = timedelta(minutes=10)
 RETRYABLE_HTTP_STATUS = {429, 500, 502, 503, 504}
 RETRY_DELAYS = (2, 5)
 STORAGE_VERSION = 1
+MAX_STALE_CACHE_AGE = timedelta(hours=24)
 
 
 class WebUntisTemporaryUnavailable(Exception):
@@ -392,7 +393,7 @@ class WebUntisPublicCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 return True, "live", None
 
         error_text = str(last_error) if last_error else "Unknown fetch error"
-        if stale_entries is not None:
+        if stale_entries is not None and self._cache_is_usable_fallback(cached):
             _LOGGER.warning(
                 "WebUntis unavailable for week %s; using persistent/stale cache (%s)",
                 key,
@@ -400,9 +401,32 @@ class WebUntisPublicCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             )
             return False, "stale_cache", error_text
 
+        if stale_entries is not None:
+            _LOGGER.warning(
+                "WebUntis unavailable for week %s; cached data is older than %s and "
+                "will not be used (%s)",
+                key,
+                MAX_STALE_CACHE_AGE,
+                last_error,
+            )
+
         raise WebUntisTemporaryUnavailable(
             f"Fetch for week {key} failed: {last_error}"
         ) from last_error
+
+    @staticmethod
+    def _cache_is_usable_fallback(cached: dict[str, Any] | None) -> bool:
+        """Return whether cached data is recent enough for outage fallback."""
+        if not cached:
+            return False
+        fetched_at = cached.get("fetched_at")
+        if not isinstance(fetched_at, datetime):
+            return False
+        if fetched_at.tzinfo is None:
+            fetched_at = fetched_at.replace(tzinfo=timezone.utc)
+        else:
+            fetched_at = fetched_at.astimezone(timezone.utc)
+        return datetime.now(timezone.utc) - fetched_at <= MAX_STALE_CACHE_AGE
 
     async def _async_fetch_week(self, monday: Date) -> list[dict[str, Any]]:
         saturday = monday + timedelta(days=5)
