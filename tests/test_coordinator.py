@@ -154,6 +154,44 @@ def test_weeks_for_range(start: datetime, end: datetime, expected: list[Date]) -
     assert WebUntisPublicCoordinator._weeks_for_range(start, end) == expected
 
 
+def test_cached_lessons_keeps_distinct_entries_without_ids() -> None:
+    item = _bare_coordinator()
+    item.hass = SimpleNamespace(config=SimpleNamespace(time_zone="Europe/Vienna"))
+    monday = Date(2026, 9, 21)
+    start = datetime(2026, 9, 21, 8, 0, tzinfo=UTC)
+    end = datetime(2026, 9, 21, 8, 45, tzinfo=UTC)
+
+    mathematics = _entry(
+        start,
+        end,
+        subject="Mathematik",
+        teacher="Anna Beispiel",
+        room="A101",
+    )
+    english = _entry(
+        start,
+        end,
+        subject="Englisch",
+        teacher="Max Mustermann",
+        room="B202",
+    )
+    mathematics["ids"] = []
+    english["ids"] = []
+
+    item._weeks[monday.isoformat()] = {
+        "fetched_at": datetime.now(UTC),
+        "entries": [mathematics, english],
+    }
+
+    lessons = item.cached_lessons_between(
+        datetime(2026, 9, 21, 7, 0, tzinfo=UTC),
+        datetime(2026, 9, 21, 10, 0, tzinfo=UTC),
+    )
+
+    assert len(lessons) == 2
+    assert {lesson.subject for lesson in lessons} == {"Mathematik", "Englisch"}
+
+
 def test_parse_utc_normalizes_naive_and_offset_datetimes() -> None:
     naive = WebUntisPublicCoordinator._parse_utc("2026-09-23T10:00:00")
     offset = WebUntisPublicCoordinator._parse_utc("2026-09-23T12:00:00+02:00")
