@@ -317,6 +317,42 @@ def test_remove_obsolete_entities_cleans_registry(monkeypatch) -> None:
     assert registry.removed == [obsolete.entity_id]
 
 
+def test_remove_obsolete_entities_cleans_removed_class_entities(
+    monkeypatch,
+) -> None:
+    entry = _entry({CONF_CLASS_ID: 123, CONF_CLASS_NAME: "5A"})
+    current = SimpleNamespace(device_identifier="example.webuntis.com-123")
+
+    removed_class_obsolete = SimpleNamespace(
+        entity_id="sensor.old_class_today_start",
+        config_entry_id="entry-1",
+        unique_id="example.webuntis.com-999-today_start",
+    )
+    other_entry_obsolete = SimpleNamespace(
+        entity_id="sensor.other_entry_today_start",
+        config_entry_id="entry-2",
+        unique_id="example.webuntis.com-999-today_start",
+    )
+
+    class FakeRegistry:
+        def __init__(self):
+            self.entities = {
+                removed_class_obsolete.entity_id: removed_class_obsolete,
+                other_entry_obsolete.entity_id: other_entry_obsolete,
+            }
+            self.removed = []
+
+        def async_remove(self, entity_id):
+            self.removed.append(entity_id)
+
+    registry = FakeRegistry()
+    monkeypatch.setattr(integration_module.er, "async_get", lambda _hass: registry)
+
+    _remove_obsolete_entities(SimpleNamespace(), entry, [current])
+
+    assert registry.removed == [removed_class_obsolete.entity_id]
+
+
 def test_unload_entry_unloads_all_platforms() -> None:
     entry = _entry(
         {
