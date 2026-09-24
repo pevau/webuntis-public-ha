@@ -219,6 +219,7 @@ def test_setup_entry_creates_one_coordinator_per_configured_class(monkeypatch) -
         }
     )
     created: list[object] = []
+    refresh_order: list[int] = []
 
     class FakeCoordinator:
         def __init__(self, hass, config_entry, class_id, class_name):
@@ -230,8 +231,8 @@ def test_setup_entry_creates_one_coordinator_per_configured_class(monkeypatch) -
             created.append(self)
 
         async def async_config_entry_first_refresh(self):
-            assert all(item.refreshed for item in created[:-1])
             self.refreshed = True
+            refresh_order.append(self.class_id)
 
     forwarded: list[tuple[object, list[str]]] = []
 
@@ -260,6 +261,7 @@ def test_setup_entry_creates_one_coordinator_per_configured_class(monkeypatch) -
         (124, "5B"),
     ]
     assert all(item.refreshed for item in created)
+    assert refresh_order == [123, 124]
     assert entry.runtime_data == created
     assert forwarded == [(entry, PLATFORMS)]
 
