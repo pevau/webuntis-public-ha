@@ -195,6 +195,82 @@ def test_public_link_rejects_missing_school(
     assert result["errors"] == {CONF_PUBLIC_LINK: "invalid_public_link"}
 
 
+def test_public_link_rejects_non_webuntis_host(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    flow = WebUntisPublicConfigFlow()
+    _patch_flow_renderers(monkeypatch, flow)
+
+    result = asyncio.run(
+        flow.async_step_public_link(
+            {
+                CONF_PUBLIC_LINK: (
+                    "https://example.org/WebUntis/?school=Example"
+                    "#/basic/timetablePublic/class?entityId=42"
+                )
+            }
+        )
+    )
+
+    assert result["errors"] == {CONF_PUBLIC_LINK: "invalid_public_link"}
+
+
+@pytest.mark.parametrize(
+    "link",
+    [
+        "demo.webuntis.com/WebUntis/?school=Example",
+        "https://demo.webuntis.com/not-webuntis/?school=Example",
+        (
+            "https://demo.webuntis.com/WebUntis/?school=Example"
+            "#/basic/timetablePublic/class?entityId=0"
+        ),
+        (
+            "https://demo.webuntis.com/WebUntis/?school=Example"
+            "#/basic/timetablePublic/class?entityId=invalid"
+        ),
+        (
+            "https://demo.webuntis.com/WebUntis/?school=Example"
+            "#/other/page?entityId=42"
+        ),
+    ],
+)
+def test_public_link_rejects_malformed_or_unsupported_links(
+    monkeypatch: pytest.MonkeyPatch,
+    link: str,
+) -> None:
+    flow = WebUntisPublicConfigFlow()
+    _patch_flow_renderers(monkeypatch, flow)
+
+    result = asyncio.run(flow.async_step_public_link({CONF_PUBLIC_LINK: link}))
+
+    assert result["errors"] == {CONF_PUBLIC_LINK: "invalid_public_link"}
+
+
+def test_public_link_derives_school_from_webuntis_host(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    flow = WebUntisPublicConfigFlow()
+    monkeypatch.setattr(flow, "_async_load_classes", AsyncMock(return_value=True))
+    next_step = AsyncMock(return_value={"type": "form", "step_id": "class_select"})
+    monkeypatch.setattr(flow, "async_step_class_select", next_step)
+
+    result = asyncio.run(
+        flow.async_step_public_link(
+            {
+                CONF_PUBLIC_LINK: (
+                    "https://demo.webuntis.com/WebUntis/"
+                    "#/basic/timetablePublic/class?entityId=42"
+                )
+            }
+        )
+    )
+
+    assert result["step_id"] == "class_select"
+    assert flow._server == "demo.webuntis.com"
+    assert flow._school == "demo"
+    assert flow._preselected_class_id == "42"
+
+
 def test_public_link_preselects_class_and_routes_forward(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
