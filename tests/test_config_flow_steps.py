@@ -623,3 +623,206 @@ def test_options_class_loading_preserves_stored_classes_when_api_fails(
     assert len(flow._class_options) == 1
     assert flow._class_options[0]["value"] == "123"
     assert flow._class_options[0]["label"] == "5A"
+
+
+def _reconfigure_flow(monkeypatch: pytest.MonkeyPatch):
+    entry = SimpleNamespace(
+        entry_id="entry-1",
+        data={
+            CONF_SERVER: "example.webuntis.com",
+            CONF_SCHOOL: "example-school",
+            CONF_SCHOOL_NAME: "Example School",
+            CONF_CLASS_ID: 123,
+            CONF_CLASS_NAME: "5A",
+            CONF_CLASS_IDS: [123, 124],
+            CONF_CLASS_NAMES: {"123": "5A", "124": "5B"},
+        },
+        options={},
+        title="Example School",
+        unique_id="example.webuntis.com-123",
+    )
+    flow = WebUntisPublicConfigFlow()
+    flow.hass = SimpleNamespace()
+    _patch_flow_renderers(monkeypatch, flow)
+    monkeypatch.setattr(flow, "_get_reconfigure_entry", lambda: entry)
+    return flow, entry
+
+
+def test_reconfigure_loads_classes_and_routes_to_class_selection(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    flow, _entry = _reconfigure_flow(monkeypatch)
+    load_classes = AsyncMock(return_value=True)
+    next_step = AsyncMock(
+        return_value={"type": "form", "step_id": "reconfigure_classes"}
+    )
+    monkeypatch.setattr(flow, "_async_load_classes", load_classes)
+    monkeypatch.setattr(flow, "async_step_reconfigure_classes", next_step)
+
+    result = asyncio.run(
+        flow.async_step_reconfigure(
+            {
+                CONF_SERVER: "https://new.webuntis.com/WebUntis/",
+                CONF_SCHOOL: "new-school",
+            }
+        )
+    )
+
+    assert result["step_id"] == "reconfigure_classes"
+    assert flow._server == "new.webuntis.com"
+    assert flow._school == "new-school"
+    assert flow._school_name == "new-school"
+    load_classes.assert_awaited_once()
+    next_step.assert_awaited_once_with()
+
+
+def test_reconfigure_preserves_school_name_for_unchanged_school(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    flow, _entry = _reconfigure_flow(monkeypatch)
+    monkeypatch.setattr(flow, "_async_load_classes", AsyncMock(return_value=True))
+    monkeypatch.setattr(
+        flow,
+        "async_step_reconfigure_classes",
+        AsyncMock(return_value={"type": "form", "step_id": "reconfigure_classes"}),
+    )
+
+    asyncio.run(
+        flow.async_step_reconfigure(
+            {
+                CONF_SERVER: "example.webuntis.com",
+                CONF_SCHOOL: "example-school",
+            }
+        )
+    )
+
+    assert flow._school_name == "Example School"
+
+
+def test_reconfigure_rejects_invalid_server(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    flow, _entry = _reconfigure_flow(monkeypatch)
+
+    result = asyncio.run(
+        flow.async_step_reconfigure(
+            {
+                CONF_SERVER: "   ",
+                CONF_SCHOOL: "example-school",
+            }
+        )
+    )
+
+    assert result["step_id"] == "reconfigure"
+    assert result["errors"] == {CONF_SERVER: "invalid_server"}
+
+
+def test_reconfigure_class_step_preselects_current_classes(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    flow, _entry = _reconfigure_flow(monkeypatch)
+    flow._server = "example.webuntis.com"
+    flow._school = "example-school"
+    flow._school_name = "Example School"
+    flow._classes = {"123": "5A", "124": "5B", "125": "5C"}
+    flow._class_names = {"123": "5A", "124": "5B", "125": "5C"}
+
+    result = asyncio.run(flow.async_step_reconfigure_classes())
+
+    assert result["step_id"] == "reconfigure_classes"
+    validated = result["data_schema"]({})
+    assert validated[CONF_CLASS_IDS] == ["123", "124"]
+
+
+def test_reconfigure_updates_entry_and_reloads(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    flow, entry = _reconfigure_flow(monkeypatch)
+    flow._server = "new.webuntis.com"
+    flow._school = "new-school"
+    flow._school_name = "New School"
+    flow._classes = {"124": "5B", "125": "5C"}
+    flow._class_names = {"124": "5B", "125": "5C"}
+
+    set_unique_id = AsyncMock(return_value=None)
+    monkeypatch.setattr(flow, "async_set_unique_id", set_unique_id)
+    updates: list[dict] = []
+    monkeypatch.setattr(
+        flow,
+        "async_update_reload_and_abort",
+        lambda target, **kwargs: {
+            "type": "abort",
+            "reason": "reconfigure_successful",
+            "target": target,
+            **kwargs,
+        },
+    )
+
+    result = asyncio.run(
+        flow.async_step_reconfigure_classes(
+            {CONF_CLASS_IDS: ["125", "124"]}
+        )
+    )
+
+    set_unique_id.assert_awaited_once_with(
+        "new.webuntis.com-125",
+        raise_on_progress=False,
+    )
+    assert result["type"] == "abort"
+    assert result["target"] is entry
+    assert result["title"] == "New School"
+    assert result["unique_id"] == "new.webuntis.com-125"
+    assert result["data_updates"] == {
+        CONF_SERVER: "new.webuntis.com",
+        CONF_SCHOOL: "new-school",
+        CONF_SCHOOL_NAME: "New School",
+        CONF_CLASS_ID: 125,
+        CONF_CLASS_NAME: "5C",
+        CONF_CLASS_IDS: [125, 124],
+        CONF_CLASS_NAMES: {"125": "5C", "124": "5B"},
+    }
+
+
+def test_reconfigure_requires_at_least_one_class(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    flow, _entry = _reconfigure_flow(monkeypatch)
+    flow._server = "example.webuntis.com"
+    flow._school = "example-school"
+    flow._school_name = "Example School"
+    flow._classes = {"123": "5A"}
+    flow._class_names = {"123": "5A"}
+
+    result = asyncio.run(
+        flow.async_step_reconfigure_classes({CONF_CLASS_IDS: []})
+    )
+
+    assert result["errors"] == {CONF_CLASS_IDS: "no_class_selected"}
+
+
+def test_reconfigure_aborts_when_target_unique_id_belongs_to_other_entry(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    flow, _entry = _reconfigure_flow(monkeypatch)
+    flow._server = "new.webuntis.com"
+    flow._school = "new-school"
+    flow._school_name = "New School"
+    flow._classes = {"125": "5C"}
+    flow._class_names = {"125": "5C"}
+
+    monkeypatch.setattr(
+        flow,
+        "async_set_unique_id",
+        AsyncMock(return_value=SimpleNamespace(entry_id="entry-2")),
+    )
+    monkeypatch.setattr(
+        flow,
+        "async_abort",
+        lambda **kwargs: {"type": "abort", **kwargs},
+    )
+
+    result = asyncio.run(
+        flow.async_step_reconfigure_classes({CONF_CLASS_IDS: ["125"]})
+    )
+
+    assert result == {"type": "abort", "reason": "already_configured"}

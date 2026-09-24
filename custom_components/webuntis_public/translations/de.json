@@ -46,6 +46,21 @@
         "data": {
           "class_ids": "Klassen"
         }
+      },
+      "reconfigure": {
+        "title": "WebUntis neu konfigurieren",
+        "description": "Ändere den öffentlichen WebUntis-Server oder den technischen Schulnamen. Die verfügbaren Klassen werden anschließend neu geladen.",
+        "data": {
+          "server": "WebUntis-Server",
+          "school": "Technischer Schulname"
+        }
+      },
+      "reconfigure_classes": {
+        "title": "Klassen auswählen",
+        "description": "Wähle die öffentlich verfügbaren Klassen für diese Integration aus.",
+        "data": {
+          "class_ids": "Klassen"
+        }
       }
     },
     "error": {
@@ -57,7 +72,8 @@
       "invalid_server": "Ungültiger WebUntis-Server.",
       "cannot_load_classes": "Die öffentlichen Klassen konnten nicht geladen werden. Prüfe, ob der Stundenplan öffentlich freigegeben ist.",
       "no_public_classes": "Für diese Schule wurden keine öffentlichen Klassen gefunden.",
-      "no_class_selected": "Bitte mindestens eine Klasse auswählen."
+      "no_class_selected": "Bitte mindestens eine Klasse auswählen.",
+      "invalid_class": "Eine oder mehrere ausgewählte Klassen sind nicht mehr verfügbar."
     },
     "abort": {
       "already_configured": "Diese Klasse ist bereits eingerichtet."
