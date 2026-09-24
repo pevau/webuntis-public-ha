@@ -11,7 +11,7 @@ from custom_components.webuntis_public import (
     async_setup_entry,
     async_unload_entry,
 )
-from custom_components.webuntis_public import __init__ as integration_module
+import custom_components.webuntis_public as integration_module
 from custom_components.webuntis_public.const import (
     CONF_CLASS_ID,
     CONF_CLASS_IDS,
