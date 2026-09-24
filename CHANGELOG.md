@@ -3,6 +3,23 @@
 All notable changes to **WebUntis Public Timetable** are documented here.
 
 
+## [0.8.0] - 2026-09-24
+
+### Added
+
+- Added a native Home Assistant reconfigure flow for changing the public WebUntis endpoint and selected classes without removing the config entry.
+- Added focused regression tests for reconfiguration, unique-ID collisions, translation-key consistency, calendar lifecycle behavior and additional edge cases.
+- Added contributor guidance for a test-first development workflow.
+
+### Changed
+
+- Standardized entity state-attribute translation keys on stable English technical names while keeping German and English display labels localized.
+- Raised the CI coverage gate to 95%; the 0.8.0 codebase reaches 95.05% coverage with 220 passing tests.
+- Aligned test and validation workflows with Python 3.14 / Home Assistant 2026.9.
+- Declared the integration explicitly as a multi-device `hub` integration.
+- Expanded the README with entity/data-model documentation, update and cache behavior, known limitations and troubleshooting guidance.
+- Release creation is now gated by the complete test suite and the 95% coverage requirement.
+
 ## [0.7.15] - 2026-09-24
 
 ### Fixed
