@@ -230,6 +230,7 @@ def test_setup_entry_creates_one_coordinator_per_configured_class(monkeypatch) -
             created.append(self)
 
         async def async_config_entry_first_refresh(self):
+            assert all(item.refreshed for item in created[:-1])
             self.refreshed = True
 
     forwarded: list[tuple[object, list[str]]] = []
