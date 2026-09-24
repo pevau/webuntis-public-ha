@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 from typing import Any
 
 from homeassistant.config_entries import ConfigEntry, ConfigEntryError
@@ -127,7 +126,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         WebUntisPublicCoordinator(hass, entry, class_id, class_name)
         for class_id, class_name in configured_classes
     ]
-    await asyncio.gather(*(coordinator.async_config_entry_first_refresh() for coordinator in coordinators))
+    # Refresh coordinators sequentially during setup. All configured classes use
+    # the same WebUntis school endpoint, so parallel first refreshes only create
+    # avoidable request bursts and can increase the chance of rate limiting.
+    for coordinator in coordinators:
+        await coordinator.async_config_entry_first_refresh()
     entry.runtime_data = coordinators
     _remove_obsolete_entities(hass, entry, coordinators)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
