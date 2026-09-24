@@ -23,6 +23,7 @@ from custom_components.webuntis_public.const import (
     CONF_SCHOOL_RESULT,
     CONF_SEARCH_QUERY,
     CONF_SERVER,
+    OPT_EXCLUDE_SUBJECTS,
     OPT_NEXT_LESSON_DAYS,
     OPT_SHOW_CANCELLED,
     OPT_SHOW_CLASS,
@@ -543,6 +544,7 @@ def test_options_flow_shows_current_defaults(
     assert validated[CONF_CLASS_IDS] == ["123"]
     assert validated[OPT_TITLE_FORMAT] == TITLE_SUBJECT_ROOM
     assert validated[OPT_NEXT_LESSON_DAYS] == 14
+    assert validated[OPT_EXCLUDE_SUBJECTS] == ""
 
 
 def test_options_flow_rejects_empty_class_selection(
