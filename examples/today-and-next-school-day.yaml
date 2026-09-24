@@ -88,10 +88,10 @@ cards:
 
       {% if current %}▶️ {% endif %}**{{ as_datetime(stunde['start_time']).strftime('%H:%M') }}
       – {{ as_datetime(stunde['end_time']).strftime('%H:%M') }}**
-      · **{{ stunde['subject'] }}**
-      {% if stunde['room'] %} · 🏫 {{ stunde['room'] }}{% endif %}
-      {% if stunde['teachers'] %} · 👤 {{ stunde['teachers'] }}{% endif %}
-      {% if stunde['changed'] %} · ⚠️ geändert{% endif %}
+      · **{{ stunde.get('fach', '—') }}**
+      {% if stunde.get('room') %} · 🏫 {{ stunde.get('room') }}{% endif %}
+      {% if stunde.get('teachers') %} · 👤 {{ stunde.get('teachers') }}{% endif %}
+      {% if stunde.get('changed', false) %} · ⚠️ geändert{% endif %}
 
       {% endfor %}
 
@@ -149,10 +149,10 @@ cards:
 
       **{{ as_datetime(stunde['start_time']).strftime('%H:%M') }}
       – {{ as_datetime(stunde['end_time']).strftime('%H:%M') }}**
-      · **{{ stunde['subject'] }}**
-      {% if stunde['room'] %} · 🏫 {{ stunde['room'] }}{% endif %}
-      {% if stunde['teachers'] %} · 👤 {{ stunde['teachers'] }}{% endif %}
-      {% if stunde['changed'] %} · ⚠️ geändert{% endif %}
+      · **{{ stunde.get('fach', '—') }}**
+      {% if stunde.get('room') %} · 🏫 {{ stunde.get('room') }}{% endif %}
+      {% if stunde.get('teachers') %} · 👤 {{ stunde.get('teachers') }}{% endif %}
+      {% if stunde.get('changed', false) %} · ⚠️ geändert{% endif %}
 
       {% endfor %}
 
