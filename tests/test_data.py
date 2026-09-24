@@ -376,3 +376,11 @@ def test_formatted_summary(title_format: str, expected: str) -> None:
     )
 
     assert lesson.formatted_summary(title_format) == expected
+
+
+def test_unnamed_subject_falls_back_to_generic_lesson() -> None:
+    lesson = _parse(
+        _entry(subject=_element("SUBJECT"))
+    )[0]
+
+    assert lesson.subject == "lesson"
