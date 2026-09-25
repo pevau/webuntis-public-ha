@@ -764,3 +764,82 @@ def test_timetable_change_emits_time_changed_semantic_event(
     assert len(events) == 1
     assert events[0]["previous"]["start"].endswith("08:00:00+00:00")
     assert events[0]["current"]["start"].endswith("09:00:00+00:00")
+
+
+
+def test_timetable_change_emits_school_start_changed(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    item = _bare_coordinator()
+    item.hass = SimpleNamespace(config=SimpleNamespace(time_zone="Europe/Vienna"))
+    monday = Date(2026, 9, 21)
+    monkeypatch.setattr(
+        coordinator_module.dt_util,
+        "now",
+        lambda: datetime(2026, 9, 23, 6, 0, tzinfo=UTC),
+    )
+    first_old = _entry(
+        datetime(2026, 9, 24, 8, 0, tzinfo=UTC),
+        datetime(2026, 9, 24, 8, 45, tzinfo=UTC),
+        subject="Mathematik",
+    )
+    first_new = _entry(
+        datetime(2026, 9, 24, 9, 0, tzinfo=UTC),
+        datetime(2026, 9, 24, 9, 45, tzinfo=UTC),
+        subject="Mathematik",
+    )
+    last = _entry(
+        datetime(2026, 9, 24, 12, 0, tzinfo=UTC),
+        datetime(2026, 9, 24, 12, 45, tzinfo=UTC),
+        subject="Englisch",
+    )
+
+    change = item._detect_timetable_change(monday, [first_old, last], [first_new, last])
+
+    assert change is not None
+    events = [
+        event for event in change["semantic_events"]
+        if event["event_type"] == "school_start_changed"
+    ]
+    assert len(events) == 1
+    assert events[0]["previous_start"].endswith("08:00:00+00:00")
+    assert events[0]["current_start"].endswith("09:00:00+00:00")
+
+
+def test_timetable_change_emits_school_end_changed(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    item = _bare_coordinator()
+    item.hass = SimpleNamespace(config=SimpleNamespace(time_zone="Europe/Vienna"))
+    monday = Date(2026, 9, 21)
+    monkeypatch.setattr(
+        coordinator_module.dt_util,
+        "now",
+        lambda: datetime(2026, 9, 23, 6, 0, tzinfo=UTC),
+    )
+    first = _entry(
+        datetime(2026, 9, 24, 8, 0, tzinfo=UTC),
+        datetime(2026, 9, 24, 8, 45, tzinfo=UTC),
+        subject="Mathematik",
+    )
+    last_old = _entry(
+        datetime(2026, 9, 24, 12, 0, tzinfo=UTC),
+        datetime(2026, 9, 24, 12, 45, tzinfo=UTC),
+        subject="Englisch",
+    )
+    last_new = _entry(
+        datetime(2026, 9, 24, 12, 0, tzinfo=UTC),
+        datetime(2026, 9, 24, 13, 45, tzinfo=UTC),
+        subject="Englisch",
+    )
+
+    change = item._detect_timetable_change(monday, [first, last_old], [first, last_new])
+
+    assert change is not None
+    events = [
+        event for event in change["semantic_events"]
+        if event["event_type"] == "school_end_changed"
+    ]
+    assert len(events) == 1
+    assert events[0]["previous_end"].endswith("12:45:00+00:00")
+    assert events[0]["current_end"].endswith("13:45:00+00:00")
