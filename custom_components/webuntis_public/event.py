@@ -38,6 +38,8 @@ class WebUntisTimetableChangeEvent(
         "lesson_substituted",
         "lesson_room_changed",
         "lesson_time_changed",
+        "school_start_changed",
+        "school_end_changed",
     ]
 
     def __init__(
