@@ -375,3 +375,110 @@ def _async_return(value):
     async def result(*_args, **_kwargs):
         return value
     return result()
+
+
+def test_public_link_flow_handles_parser_exception(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    flow = WebUntisPublicConfigFlow()
+    monkeypatch.setattr(
+        config_module,
+        "_extract_public_link",
+        lambda _link: (_ for _ in ()).throw(ValueError("broken")),
+    )
+    monkeypatch.setattr(flow, "async_show_form", lambda **kwargs: kwargs)
+
+    result = asyncio.run(
+        flow.async_step_public_link({config_module.CONF_PUBLIC_LINK: "broken"})
+    )
+
+    assert result["errors"] == {config_module.CONF_PUBLIC_LINK: "invalid_public_link"}
+
+
+def test_reconfigure_derives_school_from_server(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    flow = WebUntisPublicConfigFlow()
+    entry = SimpleNamespace(
+        data={
+            config_module.CONF_SERVER: "old.webuntis.com",
+            config_module.CONF_SCHOOL: "old",
+        }
+    )
+    monkeypatch.setattr(flow, "_get_reconfigure_entry", lambda: entry)
+    monkeypatch.setattr(flow, "_async_load_classes", lambda errors: _async_return(False))
+    monkeypatch.setattr(flow, "async_show_form", lambda **kwargs: kwargs)
+
+    result = asyncio.run(
+        flow.async_step_reconfigure(
+            {
+                config_module.CONF_SERVER: "demo.webuntis.com",
+                config_module.CONF_SCHOOL: "",
+            }
+        )
+    )
+
+    assert flow._school == "demo"
+    assert result["step_id"] == "reconfigure"
+
+
+def test_class_select_without_input_shows_form(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    flow = WebUntisPublicConfigFlow()
+    flow._classes = {"1": "5A"}
+    flow._class_names = {"1": "5A"}
+    monkeypatch.setattr(flow, "async_show_form", lambda **kwargs: kwargs)
+
+    result = asyncio.run(flow.async_step_class_select())
+
+    assert result["step_id"] == "class_select"
+
+
+def test_school_search_returns_empty_after_successful_empty_responses() -> None:
+    class Response:
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *_args):
+            return False
+
+        def raise_for_status(self):
+            return None
+
+        async def json(self, *, content_type=None):
+            return {"result": []}
+
+    class Session:
+        def post(self, *_args, **_kwargs):
+            return Response()
+
+    flow = WebUntisPublicConfigFlow()
+    flow.hass = SimpleNamespace()
+    result = asyncio.run(flow._async_search_schools(Session(), "Nobody"))
+
+    assert result == []
+
+
+def test_options_flow_uses_primary_class_as_default(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    flow = config_module.WebUntisPublicOptionsFlow()
+    entry = SimpleNamespace(
+        data={
+            config_module.CONF_CLASS_ID: 1,
+            config_module.CONF_CLASS_NAME: "5A",
+        },
+        options={},
+    )
+    monkeypatch.setattr(type(flow), "config_entry", property(lambda self: entry))
+    flow._class_options = [
+        {"value": "1", "label": "5A"},
+    ]
+    flow._class_names = {"1": "5A"}
+    monkeypatch.setattr(flow, "async_show_form", lambda **kwargs: kwargs)
+
+    result = asyncio.run(flow.async_step_init())
+
+    validated = result["data_schema"]({})
+    assert validated[config_module.CONF_CLASS_IDS] == ["1"]
