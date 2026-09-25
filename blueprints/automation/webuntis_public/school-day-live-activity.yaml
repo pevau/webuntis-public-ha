@@ -15,6 +15,14 @@ blueprint:
           filter:
             - integration: webuntis_public
               domain: sensor
+    current_lesson:
+      name: Current lesson
+      description: Select the matching WebUntis current lesson sensor.
+      selector:
+        entity:
+          filter:
+            - integration: webuntis_public
+              domain: sensor
     notification_targets:
       name: Devices
       description: Select one or more Home Assistant Companion App devices.
@@ -39,24 +47,21 @@ mode: restart
 triggers:
   - trigger: state
     entity_id: !input school_status
+  - trigger: state
+    entity_id: !input current_lesson
 
 variables:
   school_status_entity: !input school_status
+  current_lesson_entity: !input current_lesson
   activity_title: !input activity_title
   dashboard_url: !input dashboard_url
   status: "{{ states(school_status_entity) }}"
-  attrs: "{{ state_attr(school_status_entity, 'current_subject') }}"
   current_subject: "{{ state_attr(school_status_entity, 'current_subject') }}"
   current_end: "{{ state_attr(school_status_entity, 'current_lesson_end_time') }}"
   next_subject: "{{ state_attr(school_status_entity, 'next_subject') }}"
   next_start: "{{ state_attr(school_status_entity, 'next_lesson_start_time') }}"
   school_end: "{{ state_attr(school_status_entity, 'school_end_time') }}"
-  room: >
-    {% set current = expand(integration_entities('webuntis_public'))
-       | selectattr('attributes.in_progress', 'eq', true)
-       | selectattr('attributes.end_time', 'eq', current_end)
-       | list %}
-    {{ current[0].attributes.room if current else '' }}
+  room: "{{ state_attr(current_lesson_entity, 'room') or '' }}"
   tag: >
     webuntis_school_day_{{ school_status_entity | replace('.', '_') }}
 
