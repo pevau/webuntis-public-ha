@@ -5,6 +5,7 @@ from datetime import date as Date
 from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
+from zoneinfo import ZoneInfo
 
 import pytest
 from aiohttp import ClientError, ClientResponseError
