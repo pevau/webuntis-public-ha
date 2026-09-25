@@ -22,18 +22,26 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: "3.14"
-          cache: pip
-          cache-dependency-path: requirements_test.txt
 
-      - name: Install test dependencies
-        run: python -m pip install -r requirements_test.txt
+      - name: Cache test environment
+        id: cache-venv
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: ${{ runner.os }}-python-3.14-venv-${{ hashFiles('requirements_test.txt') }}
+
+      - name: Create test environment
+        if: steps.cache-venv.outputs.cache-hit != 'true'
+        run: |
+          python -m venv .venv
+          .venv/bin/python -m pip install -r requirements_test.txt
 
       - name: Compile Python sources
-        run: python -m compileall -q custom_components tests
+        run: .venv/bin/python -m compileall -q custom_components tests
 
       - name: Run tests with coverage
         run: >
-          python -m pytest -q
+          .venv/bin/python -m pytest -q
           --cov=custom_components.webuntis_public
           --cov-report=term-missing
           --cov-fail-under=95
