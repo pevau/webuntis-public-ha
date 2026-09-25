@@ -1,0 +1,114 @@
+blueprint:
+  name: WebUntis – School Day Live Activity
+  description: >
+    Show the current school day as a Home Assistant Companion Live Activity
+    (iOS 17.2+) or Live Update (Android 16+). The activity starts when school
+    begins, updates when the school status changes, uses the device-side
+    chronometer for lesson/break countdowns, and is cleared after school.
+  domain: automation
+  input:
+    school_status:
+      name: School status
+      description: Select the WebUntis school status sensor for the class.
+      selector:
+        entity:
+          filter:
+            - integration: webuntis_public
+              domain: sensor
+    notification_targets:
+      name: Devices
+      description: Select one or more Home Assistant Companion App devices.
+      selector:
+        target:
+          device:
+            integration: mobile_app
+    activity_title:
+      name: Title
+      default: School
+      selector:
+        text:
+    dashboard_url:
+      name: Open on tap
+      description: Optional Home Assistant path, for example /lovelace/school.
+      default: ""
+      selector:
+        text:
+
+mode: restart
+
+triggers:
+  - trigger: state
+    entity_id: !input school_status
+
+variables:
+  school_status_entity: !input school_status
+  activity_title: !input activity_title
+  dashboard_url: !input dashboard_url
+  status: "{{ states(school_status_entity) }}"
+  attrs: "{{ state_attr(school_status_entity, 'current_subject') }}"
+  current_subject: "{{ state_attr(school_status_entity, 'current_subject') }}"
+  current_end: "{{ state_attr(school_status_entity, 'current_lesson_end_time') }}"
+  next_subject: "{{ state_attr(school_status_entity, 'next_subject') }}"
+  next_start: "{{ state_attr(school_status_entity, 'next_lesson_start_time') }}"
+  school_end: "{{ state_attr(school_status_entity, 'school_end_time') }}"
+  room: >
+    {% set current = expand(integration_entities('webuntis_public'))
+       | selectattr('attributes.in_progress', 'eq', true)
+       | selectattr('attributes.end_time', 'eq', current_end)
+       | list %}
+    {{ current[0].attributes.room if current else '' }}
+  tag: >
+    webuntis_school_day_{{ school_status_entity | replace('.', '_') }}
+
+actions:
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ status in ['after_school', 'school_free', 'unknown', 'unavailable'] }}"
+        sequence:
+          - action: notify.send_message
+            target: !input notification_targets
+            data:
+              message: clear_notification
+              data:
+                tag: "{{ tag }}"
+    default:
+      - variables:
+          countdown_to: >
+            {% if status == 'lesson' and current_end %}
+              {{ current_end }}
+            {% elif status == 'break' and next_start %}
+              {{ next_start }}
+            {% elif status == 'before_school' and next_start %}
+              {{ next_start }}
+            {% else %}
+              {{ school_end }}
+            {% endif %}
+          seconds_remaining: >
+            {% if countdown_to %}
+              {{ [0, (as_timestamp(countdown_to) - as_timestamp(now())) | int] | max }}
+            {% else %}0{% endif %}
+          message_text: >
+            {% if status == 'lesson' %}
+              {{ current_subject or 'Lesson' }}{% if room %} · {{ room }}{% endif %}
+            {% elif status == 'break' %}
+              Break{% if next_subject %} · Next: {{ next_subject }}{% endif %}
+            {% elif status == 'before_school' %}
+              {% if next_subject %}First: {{ next_subject }}{% else %}School starts soon{% endif %}
+            {% else %}
+              School day
+            {% endif %}
+      - action: notify.send_message
+        target: !input notification_targets
+        data:
+          title: "{{ activity_title }}"
+          message: "{{ message_text | trim }}"
+          data:
+            tag: "{{ tag }}"
+            live_update: true
+            silent: true
+            chronometer: "{{ seconds_remaining | int > 0 }}"
+            when: "{{ seconds_remaining | int }}"
+            when_relative: true
+            notification_icon: mdi:school
+            url: "{{ dashboard_url }}"
