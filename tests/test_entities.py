@@ -820,3 +820,38 @@ def test_event_entity_ignores_unknown_semantic_event_type(
     entity._handle_coordinator_update()
 
     assert [event_type for event_type, _data in emitted] == ["timetable_changed"]
+
+
+def test_calendar_added_to_hass_registers_language_listener(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    coordinator = FakeCoordinator()
+    calendar = calendar_module.WebUntisPublicCalendar(
+        _entry(),
+        coordinator,
+        _translations(),
+    )
+    remove_callback = object()
+    listen_calls = []
+
+    calendar.hass = SimpleNamespace(
+        bus=SimpleNamespace(
+            async_listen=lambda event_type, callback: (
+                listen_calls.append((event_type, callback)),
+                remove_callback,
+            )[1]
+        )
+    )
+    registered = []
+    monkeypatch.setattr(
+        calendar,
+        "async_on_remove",
+        lambda callback: registered.append(callback),
+    )
+
+    asyncio.run(calendar.async_added_to_hass())
+
+    assert len(listen_calls) == 1
+    assert listen_calls[0][0] == calendar_module.EVENT_CORE_CONFIG_UPDATE
+    assert listen_calls[0][1] == calendar._async_core_config_updated
+    assert registered == [remove_callback]
