@@ -856,3 +856,45 @@ def test_calendar_added_to_hass_registers_language_listener(
     assert listen_calls[0][0] == calendar_module.EVENT_CORE_CONFIG_UPDATE
     assert listen_calls[0][1] == calendar._async_core_config_updated
     assert remove_callback in registered
+
+
+def test_time_sensitive_sensor_registers_minute_refresh(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    coordinator = FakeCoordinator()
+    coordinator.async_add_listener = lambda callback, context=None: lambda: None
+    sensor = sensor_module.WebUntisSchoolStatusSensor(_entry(), coordinator)
+    sensor._time_sensitive = True
+    sensor.hass = SimpleNamespace()
+    remove_callback = object()
+    tracked = []
+    registered = []
+
+    monkeypatch.setattr(
+        sensor_module,
+        "async_track_time_interval",
+        lambda hass, callback, interval: (
+            tracked.append((hass, callback, interval)),
+            remove_callback,
+        )[1],
+    )
+    monkeypatch.setattr(sensor, "async_on_remove", lambda callback: registered.append(callback))
+
+    asyncio.run(sensor.async_added_to_hass())
+
+    assert len(tracked) == 1
+    assert tracked[0][2] == timedelta(minutes=1)
+    assert remove_callback in registered
+
+
+def test_school_status_icon_uses_status_mapping(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    sensor = sensor_module.WebUntisSchoolStatusSensor(_entry(), FakeCoordinator())
+    monkeypatch.setattr(
+        type(sensor),
+        "native_value",
+        property(lambda self: "break"),
+    )
+
+    assert sensor.icon == "mdi:coffee-outline"
