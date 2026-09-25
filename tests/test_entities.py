@@ -164,6 +164,20 @@ def test_button_and_event_setup_registers_expected_entities_per_class() -> None:
     assert len(events) == 2
 
 
+
+def test_live_activity_test_button_fires_class_scoped_event() -> None:
+    coordinator = FakeCoordinator()
+    button = button_module.WebUntisLiveActivityTestButton(_entry(), coordinator)
+    async_fire = AsyncMock()
+    button.hass = SimpleNamespace(bus=SimpleNamespace(async_fire=async_fire))
+
+    asyncio.run(button.async_press())
+
+    async_fire.assert_called_once_with(
+        "webuntis_public_test_live_activity",
+        {"device_identifier": coordinator.device_identifier},
+    )
+
 def test_current_lesson_sensor_reports_parallel_subjects_and_attributes(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
