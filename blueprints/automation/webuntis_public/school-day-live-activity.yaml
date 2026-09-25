@@ -50,6 +50,9 @@ triggers:
     entity_id: !input school_status
   - trigger: state
     entity_id: !input current_lesson
+  - trigger: event
+    event_type: webuntis_public_test_live_activity
+    id: test
 
 variables:
   school_status_entity: !input school_status
@@ -68,6 +71,24 @@ variables:
 
 actions:
   - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.id | default('') == 'test' }}"
+        sequence:
+          - action: notify.send_message
+            target: !input notification_targets
+            data:
+              title: "{{ activity_title }} · Test"
+              message: "Mathematics · Room 204"
+              data:
+                tag: "{{ tag }}"
+                live_update: true
+                silent: true
+                chronometer: true
+                when: 600
+                when_relative: true
+                notification_icon: mdi:school
+                url: "{{ dashboard_url }}"
       - conditions:
           - condition: template
             value_template: "{{ status in ['after_school', 'school_free', 'unknown', 'unavailable'] }}"
