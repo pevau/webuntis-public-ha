@@ -95,6 +95,22 @@ The integration currently includes:
 
 Setup, options, entity names, data-status values and calendar details such as cancellations, substitutions and room changes follow the Home Assistant language.
 
+## Blueprints
+
+Optional ready-to-use automation blueprints are included in this repository.
+
+### School Day Live Activity
+
+Shows the current school day as a Home Assistant Companion Live Activity on supported devices and keeps lesson/break information up to date.
+
+[![Import School Day Live Activity Blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Fpevau%2Fwebuntis-public-ha%2Fblob%2Fmain%2Fblueprints%2Fautomation%2Fwebuntis_public%2Fschool-day-live-activity.yaml)
+
+### Timetable Change Notifications
+
+Sends notifications for selected timetable changes such as cancellations, substitutions, room changes and changed school start/end times.
+
+[![Import Timetable Change Notifications Blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Fpevau%2Fwebuntis-public-ha%2Fblob%2Fmain%2Fblueprints%2Fautomation%2Fwebuntis_public%2Ftimetable-change-notifications.yaml)
+
 ## Dashboard examples
 
 Ready-to-use Home Assistant dashboard examples are available in the [examples](examples/) directory.
