@@ -384,3 +384,109 @@ def test_unnamed_subject_falls_back_to_generic_lesson() -> None:
     )[0]
 
     assert lesson.subject == "lesson"
+
+
+def test_parser_ignores_malformed_position_items_and_unknown_elements() -> None:
+    entry = _entry(subject=_element("SUBJECT", long_name="Deutsch"))
+    entry["position1"] = [
+        "invalid",
+        {
+            "current": [
+                "invalid",
+                {"type": "UNKNOWN", "longName": "Ignored"},
+                {"longName": "Deutsch"},
+            ],
+            "removed": [],
+        },
+    ]
+
+    lesson = _parse(entry)[0]
+
+    assert lesson.subject == "Deutsch"
+
+
+def test_text_values_ignore_invalid_empty_and_duplicate_items() -> None:
+    entry = _entry(
+        subject=_element("SUBJECT", long_name="Deutsch"),
+        lesson_info="Hinweis",
+    )
+    entry["texts"] = [
+        "invalid",
+        {"type": "PERIOD_INFO", "text": None},
+        {"type": "PERIOD_INFO", "text": "   "},
+        {"type": "LESSON_INFO", "text": "Hinweis"},
+        {"type": "UNKNOWN", "text": "Zusatz"},
+    ]
+
+    lesson = _parse(entry)[0]
+
+    assert lesson.texts == (("lesson_info", "Hinweis"), ("info", "Zusatz"))
+
+
+def test_parse_datetime_accepts_naive_datetime_text() -> None:
+    tz = ZoneInfo("Europe/Vienna")
+    lessons = parse_lessons(
+        [
+            _entry(
+                start="2026-09-23T08:00:00",
+                end="2026-09-23T08:45:00",
+                subject=_element("SUBJECT", long_name="Deutsch"),
+            )
+        ],
+        datetime(2026, 9, 23, 0, 0, tzinfo=tz),
+        datetime(2026, 9, 24, 0, 0, tzinfo=tz),
+        tz,
+    )
+
+    assert lessons[0].start.isoformat() == "2026-09-23T08:00:00+02:00"
+
+
+def test_changed_detects_subject_and_room_changes() -> None:
+    base = dict(
+        start=datetime(2026, 9, 23, 8, 0, tzinfo=UTC),
+        end=datetime(2026, 9, 23, 8, 45, tzinfo=UTC),
+        subject="Mathematik",
+        status="REGULAR",
+        teachers=(),
+        old_teachers=(),
+        texts=(),
+        raw_count=1,
+    )
+    subject_change = WebUntisLesson(
+        **base,
+        subjects=("Mathematik",),
+        old_subjects=("Physik",),
+        rooms=(),
+        old_rooms=(),
+    )
+    room_change = WebUntisLesson(
+        **base,
+        subjects=("Mathematik",),
+        old_subjects=(),
+        rooms=("A102",),
+        old_rooms=("A101",),
+    )
+
+    assert subject_change.changed is True
+    assert room_change.changed is True
+
+
+def test_summary_and_removed_room_teacher_fallbacks() -> None:
+    lesson = WebUntisLesson(
+        start=datetime(2026, 9, 23, 8, 0, tzinfo=UTC),
+        end=datetime(2026, 9, 23, 8, 45, tzinfo=UTC),
+        subject="Mathematik",
+        status="REGULAR",
+        subjects=("Mathematik",),
+        old_subjects=(),
+        teachers=(),
+        old_teachers=("Alte Lehrkraft",),
+        rooms=(),
+        old_rooms=("A101",),
+        texts=(),
+        raw_count=1,
+    )
+
+    assert lesson.summary == "Mathematik"
+    assert lesson.room == "A101"
+    assert lesson.teacher == "Alte Lehrkraft"
