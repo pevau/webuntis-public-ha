@@ -978,7 +978,7 @@ def test_coordinator_constructor_initializes_primary_class(
     assert item.class_id == 123
     assert item.class_name == "5A"
     assert item.school_name == "Demo School"
-    assert item._data_source == "unavailable"
+    assert item.data_source == "unavailable"
     assert item._weeks == {}
 
 
@@ -1042,3 +1042,16 @@ def test_snapshot_returns_diagnostic_state() -> None:
 
     assert snapshot == item.diagnostic_state
     assert snapshot["data_source"] == "cache"
+
+
+def test_semantic_events_skip_date_present_on_only_one_side() -> None:
+    item = _bare_coordinator()
+    tz = ZoneInfo("Europe/Vienna")
+    old = parse_lessons(
+        [_entry(datetime(2026, 9, 24, 8, 0, tzinfo=UTC), datetime(2026, 9, 24, 8, 45, tzinfo=UTC))],
+        datetime(2026, 9, 24, 0, 0, tzinfo=tz),
+        datetime(2026, 9, 26, 0, 0, tzinfo=tz),
+        tz,
+    )
+
+    assert item._semantic_events(old, []) == []
