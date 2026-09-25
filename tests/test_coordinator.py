@@ -862,10 +862,10 @@ def test_semantic_events_do_not_repeat_persistent_old_metadata(
 
     previous = _entry(start, end, teacher="Max", room="B202")
     current = _entry(start, end, teacher="Max", room="B202")
-    previous["te"][0]["orgname"] = "Anna"
-    previous["ro"][0]["orgname"] = "A101"
-    current["te"][0]["orgname"] = "Anna"
-    current["ro"][0]["orgname"] = "A101"
+    previous["position3"][0]["removed"] = previous["position3"][0]["current"].copy()
+    previous["position2"][0]["removed"] = previous["position2"][0]["current"].copy()
+    current["position3"][0]["removed"] = current["position3"][0]["current"].copy()
+    current["position2"][0]["removed"] = current["position2"][0]["current"].copy()
     current["lstext"] = "Updated information"
 
     change = item._detect_timetable_change(monday, [previous], [current])
