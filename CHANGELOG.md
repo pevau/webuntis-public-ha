@@ -2,6 +2,18 @@
 
 All notable changes to **WebUntis Public Timetable** are documented here.
 
+## [0.8.6] - 2026-09-26
+
+### Added
+
+- Added one-click Home Assistant import buttons for both bundled automation blueprints.
+- Added a disabled-by-default diagnostic button per class to test the School Day Live Activity without waiting for an active school day.
+- Added class-scoped Live Activity test events so installations with multiple classes only trigger the matching automation.
+
+### Fixed
+
+- Fixed the notification target selectors in both bundled blueprints for current Home Assistant blueprint validation.
+
 ## [0.8.5] - 2026-09-25
 
 ### Added
