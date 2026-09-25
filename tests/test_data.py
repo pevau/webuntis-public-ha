@@ -11,7 +11,7 @@ from custom_components.webuntis_public.const import (
     TITLE_SUBJECT_ROOM_TEACHER,
     TITLE_SUBJECT_TEACHER,
 )
-from custom_components.webuntis_public.data import WebUntisLesson, as_list, parse_lessons
+from custom_components.webuntis_public.data import WebUntisLesson, _parse_datetime, as_list, parse_lessons
 
 
 UTC = timezone.utc
@@ -490,3 +490,7 @@ def test_summary_and_removed_room_teacher_fallbacks() -> None:
     assert lesson.summary == "Mathematik"
     assert lesson.room == "A101"
     assert lesson.teacher == "Alte Lehrkraft"
+
+
+def test_parse_datetime_returns_none_for_empty_value() -> None:
+    assert _parse_datetime(None, ZoneInfo("Europe/Vienna")) is None
