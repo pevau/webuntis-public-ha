@@ -701,3 +701,66 @@ def test_timetable_change_emits_lesson_substituted_semantic_event(
     assert event["event_type"] == "lesson_substituted"
     assert event["previous"]["teacher"] == "Anna Beispiel"
     assert event["current"]["teacher"] == "Max Mustermann"
+
+
+
+def test_timetable_change_emits_room_changed_semantic_event(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    item = _bare_coordinator()
+    item.hass = SimpleNamespace(config=SimpleNamespace(time_zone="Europe/Vienna"))
+    monday = Date(2026, 9, 21)
+    monkeypatch.setattr(
+        coordinator_module.dt_util,
+        "now",
+        lambda: datetime(2026, 9, 23, 12, 0, tzinfo=UTC),
+    )
+    start = datetime(2026, 9, 24, 8, 0, tzinfo=UTC)
+    end = datetime(2026, 9, 24, 8, 45, tzinfo=UTC)
+
+    change = item._detect_timetable_change(
+        monday,
+        [_entry(start, end, room="A101")],
+        [_entry(start, end, room="B202")],
+    )
+
+    assert change is not None
+    events = [
+        event for event in change["semantic_events"]
+        if event["event_type"] == "lesson_room_changed"
+    ]
+    assert len(events) == 1
+    assert events[0]["previous"]["room"] == "A101"
+    assert events[0]["current"]["room"] == "B202"
+
+
+def test_timetable_change_emits_time_changed_semantic_event(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    item = _bare_coordinator()
+    item.hass = SimpleNamespace(config=SimpleNamespace(time_zone="Europe/Vienna"))
+    monday = Date(2026, 9, 21)
+    monkeypatch.setattr(
+        coordinator_module.dt_util,
+        "now",
+        lambda: datetime(2026, 9, 23, 12, 0, tzinfo=UTC),
+    )
+    old_start = datetime(2026, 9, 24, 8, 0, tzinfo=UTC)
+    old_end = datetime(2026, 9, 24, 8, 45, tzinfo=UTC)
+    new_start = datetime(2026, 9, 24, 9, 0, tzinfo=UTC)
+    new_end = datetime(2026, 9, 24, 9, 45, tzinfo=UTC)
+
+    change = item._detect_timetable_change(
+        monday,
+        [_entry(old_start, old_end)],
+        [_entry(new_start, new_end)],
+    )
+
+    assert change is not None
+    events = [
+        event for event in change["semantic_events"]
+        if event["event_type"] == "lesson_time_changed"
+    ]
+    assert len(events) == 1
+    assert events[0]["previous"]["start"].endswith("08:00:00+00:00")
+    assert events[0]["current"]["start"].endswith("09:00:00+00:00")
