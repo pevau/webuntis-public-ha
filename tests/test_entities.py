@@ -167,11 +167,13 @@ def test_button_and_event_setup_registers_expected_entities_per_class() -> None:
 
 
 def test_time_sensitive_sensor_interval_callback_is_marked_callback() -> None:
-    assert getattr(
-        sensor_module._WebUntisSensorBase._handle_time_interval,
-        "_hass_callback",
-        False,
-    ) is True
+    callback = sensor_module._WebUntisSensorBase._handle_time_interval
+    assert getattr(callback, "_hass_callback", False) is True
+
+    sensor = SimpleNamespace(async_write_ha_state=AsyncMock())
+    callback(sensor, BASE)
+
+    sensor.async_write_ha_state.assert_called_once_with()
 
 def test_live_activity_test_button_fires_class_scoped_event() -> None:
     coordinator = FakeCoordinator()
