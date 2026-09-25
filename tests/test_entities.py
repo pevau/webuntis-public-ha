@@ -165,6 +165,14 @@ def test_button_and_event_setup_registers_expected_entities_per_class() -> None:
 
 
 
+
+def test_time_sensitive_sensor_interval_callback_is_marked_callback() -> None:
+    assert getattr(
+        sensor_module._WebUntisSensorBase._handle_time_interval,
+        "_hass_callback",
+        False,
+    ) is True
+
 def test_live_activity_test_button_fires_class_scoped_event() -> None:
     coordinator = FakeCoordinator()
     button = button_module.WebUntisLiveActivityTestButton(_entry(), coordinator)
