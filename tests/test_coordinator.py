@@ -866,13 +866,12 @@ def test_semantic_events_do_not_repeat_persistent_old_metadata(
     previous["position2"][0]["removed"] = previous["position2"][0]["current"].copy()
     current["position3"][0]["removed"] = current["position3"][0]["current"].copy()
     current["position2"][0]["removed"] = current["position2"][0]["current"].copy()
-    current["lstext"] = "Updated information"
+    old_lessons = parse_lessons([previous], ZoneInfo("Europe/Vienna"))
+    new_lessons = parse_lessons([current], ZoneInfo("Europe/Vienna"))
 
-    change = item._detect_timetable_change(monday, [previous], [current])
-
-    assert change is not None
     event_types = {
-        event["event_type"] for event in change["semantic_events"]
+        event["event_type"]
+        for event in item._semantic_events(old_lessons, new_lessons)
     }
     assert "lesson_substituted" not in event_types
     assert "lesson_room_changed" not in event_types
