@@ -341,25 +341,34 @@ def test_class_select_schema_filters_invalid_explicit_defaults() -> None:
     assert schema({})[CONF_CLASS_IDS] == ["2"]
 
 
-def test_options_flow_falls_back_to_primary_class_when_class_ids_invalid(
+def test_options_flow_load_class_options_keeps_stored_primary_class(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     flow = config_module.WebUntisPublicOptionsFlow()
-    flow.config_entry = SimpleNamespace(
+    entry = SimpleNamespace(
         data={
             config_module.CONF_SERVER: "demo.webuntis.com",
+            config_module.CONF_SCHOOL: "",
             config_module.CONF_CLASS_ID: 1,
-            config_module.CONF_CLASS_IDS: [],
+            config_module.CONF_CLASS_NAME: "5A",
+            config_module.CONF_CLASS_NAMES: {"1": "5A"},
         },
         options={},
     )
-    flow._class_options = []
-    flow._class_names = {"1": "5A"}
-    monkeypatch.setattr(flow, "async_show_form", lambda **kwargs: kwargs)
+    monkeypatch.setattr(
+        type(flow),
+        "config_entry",
+        property(lambda self: entry),
+    )
+    flow.hass = SimpleNamespace(
+        async_add_executor_job=lambda func: asyncio.to_thread(func)
+    )
+    monkeypatch.setattr(config_module, "_list_public_classes", lambda *_args: [])
 
-    result = asyncio.run(flow.async_step_init())
+    asyncio.run(flow._async_load_class_options())
 
-    assert result["data_schema"]({})[CONF_CLASS_IDS] == ["1"]
+    assert flow._class_names == {"1": "5A"}
+    assert [option["value"] for option in flow._class_options] == ["1"]
 
 
 def _async_return(value):
