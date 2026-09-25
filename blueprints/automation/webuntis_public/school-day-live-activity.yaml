@@ -20,8 +20,8 @@ blueprint:
       description: Select one or more Home Assistant Companion App devices.
       selector:
         target:
-          device:
-            integration: mobile_app
+          integration: mobile_app
+          domain: notify
     activity_title:
       name: Title
       default: School
