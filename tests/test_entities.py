@@ -144,7 +144,7 @@ def test_sensor_setup_registers_ten_entities() -> None:
     assert len({entity.unique_id for entity in added}) == 10
 
 
-def test_button_and_event_setup_register_one_entity_per_class() -> None:
+def test_button_and_event_setup_registers_expected_entities_per_class() -> None:
     coordinators = [FakeCoordinator(), FakeCoordinator()]
     coordinators[1].device_identifier = "example.webuntis.com-124"
     entry = _entry(runtime_data=coordinators)
@@ -154,7 +154,13 @@ def test_button_and_event_setup_register_one_entity_per_class() -> None:
     asyncio.run(button_module.async_setup_entry(None, entry, buttons.extend))
     asyncio.run(event_module.async_setup_entry(None, entry, events.extend))
 
-    assert len(buttons) == 2
+    assert len(buttons) == 4
+    assert len({button.unique_id for button in buttons}) == 4
+    assert sum(isinstance(button, button_module.WebUntisRefreshButton) for button in buttons) == 2
+    assert sum(
+        isinstance(button, button_module.WebUntisLiveActivityTestButton)
+        for button in buttons
+    ) == 2
     assert len(events) == 2
 
 
