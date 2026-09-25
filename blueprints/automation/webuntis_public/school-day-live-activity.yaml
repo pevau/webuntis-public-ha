@@ -27,9 +27,8 @@ blueprint:
       name: Devices
       description: Select one or more Home Assistant Companion App devices.
       selector:
-        entity:
-          multiple: true
-          filter:
+        target:
+          entity:
             - integration: mobile_app
               domain: notify
     activity_title:
