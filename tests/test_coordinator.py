@@ -11,6 +11,7 @@ from aiohttp import ClientError, ClientResponseError
 
 from custom_components.webuntis_public import coordinator as coordinator_module
 from custom_components.webuntis_public.const import OPT_EXCLUDE_SUBJECTS
+from custom_components.webuntis_public.data import parse_lessons
 from custom_components.webuntis_public.coordinator import (
     RETRY_DELAYS,
     WebUntisPublicCoordinator,
