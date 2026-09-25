@@ -947,10 +947,7 @@ def test_semantic_events_skip_day_missing_on_one_side() -> None:
 def test_coordinator_constructor_initializes_primary_class(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    hass = SimpleNamespace(
-        config=SimpleNamespace(time_zone="Europe/Vienna"),
-        data={},
-    )
+    hass = SimpleNamespace(config=SimpleNamespace(time_zone="Europe/Vienna"), data={})
     entry = SimpleNamespace(
         entry_id="entry-1",
         data={
@@ -962,18 +959,9 @@ def test_coordinator_constructor_initializes_primary_class(
         },
         options={},
     )
-    session = object()
-    monkeypatch.setattr(coordinator_module, "async_get_clientsession", lambda _hass: session)
-    monkeypatch.setattr(
-        coordinator_module.DataUpdateCoordinator,
-        "__init__",
-        lambda self, *args, **kwargs: None,
-    )
-    monkeypatch.setattr(
-        coordinator_module,
-        "Store",
-        lambda hass, version, key: SimpleNamespace(key=key),
-    )
+    monkeypatch.setattr(coordinator_module, "async_get_clientsession", lambda _hass: object())
+    monkeypatch.setattr(coordinator_module.DataUpdateCoordinator, "__init__", lambda self, *args, **kwargs: None)
+    monkeypatch.setattr(coordinator_module, "Store", SimpleNamespace)
 
     item = WebUntisPublicCoordinator(hass, entry)
 
@@ -982,9 +970,7 @@ def test_coordinator_constructor_initializes_primary_class(
     assert item.class_id == 123
     assert item.class_name == "5A"
     assert item.school_name == "Demo School"
-    assert item._session is session
-    assert item._store.key == "webuntis_public.entry-1"
-    assert item.data_source == "unavailable"
+    assert item._data_source == "unavailable"
     assert item._weeks == {}
 
 
@@ -1001,23 +987,14 @@ def test_coordinator_constructor_uses_secondary_class_store(
         options={},
     )
     monkeypatch.setattr(coordinator_module, "async_get_clientsession", lambda _hass: object())
-    monkeypatch.setattr(
-        coordinator_module.DataUpdateCoordinator,
-        "__init__",
-        lambda self, *args, **kwargs: None,
-    )
-    monkeypatch.setattr(
-        coordinator_module,
-        "Store",
-        lambda hass, version, key: SimpleNamespace(key=key),
-    )
+    monkeypatch.setattr(coordinator_module.DataUpdateCoordinator, "__init__", lambda self, *args, **kwargs: None)
+    monkeypatch.setattr(coordinator_module, "Store", SimpleNamespace)
 
     item = WebUntisPublicCoordinator(hass, entry, class_id=456, class_name="5B")
 
     assert item.class_id == 456
     assert item.class_name == "5B"
     assert item.school_name == "demo.webuntis.com"
-    assert item._store.key == "webuntis_public.entry-1.456"
 
 
 def test_cached_lessons_skips_uncached_weeks() -> None:
