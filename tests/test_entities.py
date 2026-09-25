@@ -751,3 +751,72 @@ def test_sensor_base_day_lookup_uses_day_bounds(
 
     assert sensor._lessons_for_day(2) == coordinator.cached_lessons_between(start, end)
     assert sensor._lessons_today() == coordinator.cached_lessons_between(start, end)
+
+
+def test_event_entity_emits_supported_semantic_events(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    coordinator = FakeCoordinator()
+    entity = event_module.WebUntisTimetableChangeEvent(_entry(), coordinator)
+    emitted: list[tuple[str, dict]] = []
+
+    monkeypatch.setattr(
+        entity,
+        "_trigger_event",
+        lambda event_type, data: emitted.append((event_type, data)),
+    )
+    monkeypatch.setattr(entity, "async_write_ha_state", lambda: None)
+
+    semantic = {
+        "event_type": "lesson_cancelled",
+        "subject": "Mathematik",
+    }
+    coordinator._sequence = 1
+    coordinator._changes = [
+        {
+            "sequence": 1,
+            "week": "2026-09-21",
+            "semantic_events": [semantic],
+        }
+    ]
+
+    entity._handle_coordinator_update()
+
+    assert emitted == [
+        (
+            "timetable_changed",
+            {
+                "sequence": 1,
+                "week": "2026-09-21",
+                "semantic_events": [semantic],
+            },
+        ),
+        ("lesson_cancelled", semantic),
+    ]
+
+
+def test_event_entity_ignores_unknown_semantic_event_type(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    coordinator = FakeCoordinator()
+    entity = event_module.WebUntisTimetableChangeEvent(_entry(), coordinator)
+    emitted: list[tuple[str, dict]] = []
+
+    monkeypatch.setattr(
+        entity,
+        "_trigger_event",
+        lambda event_type, data: emitted.append((event_type, data)),
+    )
+    monkeypatch.setattr(entity, "async_write_ha_state", lambda: None)
+
+    coordinator._sequence = 1
+    coordinator._changes = [
+        {
+            "sequence": 1,
+            "semantic_events": [{"event_type": "unknown_event"}],
+        }
+    ]
+
+    entity._handle_coordinator_update()
+
+    assert [event_type for event_type, _data in emitted] == ["timetable_changed"]
