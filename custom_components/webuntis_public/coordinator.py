@@ -649,6 +649,60 @@ class WebUntisPublicCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     }
                 )
 
+            room_changed = (
+                previous.rooms != lesson.rooms
+                or bool(lesson.old_rooms)
+            )
+            if room_changed:
+                events.append(
+                    {
+                        **base,
+                        "event_type": "lesson_room_changed",
+                        "previous": self._lesson_event_data(previous),
+                        "current": self._lesson_event_data(lesson),
+                    }
+                )
+
+        events.extend(self._lesson_time_change_events(old_lessons, new_lessons))
+        return events
+
+    def _lesson_time_change_events(
+        self,
+        old_lessons: list[WebUntisLesson],
+        new_lessons: list[WebUntisLesson],
+    ) -> list[dict[str, Any]]:
+        """Detect lessons that moved while retaining their semantic identity."""
+        events: list[dict[str, Any]] = []
+        matched_new: set[int] = set()
+
+        for previous in old_lessons:
+            candidates = [
+                (index, lesson)
+                for index, lesson in enumerate(new_lessons)
+                if index not in matched_new
+                and lesson.subject == previous.subject
+                and lesson.start.date() == previous.start.date()
+                and (lesson.start != previous.start or lesson.end != previous.end)
+            ]
+            if len(candidates) != 1:
+                continue
+
+            index, lesson = candidates[0]
+            matched_new.add(index)
+            events.append(
+                {
+                    "event_type": "lesson_time_changed",
+                    "class_name": self.class_name,
+                    "start": lesson.start.isoformat(),
+                    "end": lesson.end.isoformat(),
+                    "subject": lesson.subject,
+                    "teacher": lesson.teacher,
+                    "room": lesson.room,
+                    "previous": self._lesson_event_data(previous),
+                    "current": self._lesson_event_data(lesson),
+                }
+            )
+
         return events
 
     @staticmethod
