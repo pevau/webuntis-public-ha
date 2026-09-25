@@ -23,14 +23,13 @@ blueprint:
           filter:
             - integration: webuntis_public
               domain: sensor
-    notification_targets:
-      name: Devices
-      description: Select one or more Home Assistant Companion App devices.
+    notification_service:
+      name: Mobile App notify service
+      description: >
+        Enter the Home Assistant Companion App notify service for the device,
+        for example notify.mobile_app_peters_iphone.
       selector:
-        target:
-          entity:
-            - integration: mobile_app
-              domain: notify
+        text:
     activity_title:
       name: Title
       default: School
@@ -59,6 +58,7 @@ variables:
   current_lesson_entity: !input current_lesson
   activity_title: !input activity_title
   dashboard_url: !input dashboard_url
+  notification_service: !input notification_service
   status: "{{ states(school_status_entity) }}"
   current_subject: "{{ state_attr(school_status_entity, 'current_subject') }}"
   current_end: "{{ state_attr(school_status_entity, 'current_lesson_end_time') }}"
@@ -83,8 +83,7 @@ actions:
               {{ trigger.id | default('') == 'test'
                  and trigger.event.data.device_identifier | default('') == selected_device_identifier }}
         sequence:
-          - action: notify.send_message
-            target: !input notification_targets
+          - action: "{{ notification_service }}"
             data:
               title: "{{ activity_title }} · Test"
               message: "Mathematics · Room 204"
@@ -101,8 +100,7 @@ actions:
           - condition: template
             value_template: "{{ status in ['after_school', 'school_free', 'unknown', 'unavailable'] }}"
         sequence:
-          - action: notify.send_message
-            target: !input notification_targets
+          - action: "{{ notification_service }}"
             data:
               message: clear_notification
               data:
@@ -133,8 +131,7 @@ actions:
             {% else %}
               School day
             {% endif %}
-      - action: notify.send_message
-        target: !input notification_targets
+      - action: "{{ notification_service }}"
         data:
           title: "{{ activity_title }}"
           message: "{{ message_text | trim }}"
