@@ -3,6 +3,22 @@
 All notable changes to **WebUntis Public Timetable** are documented here.
 
 
+## [0.8.1] - 2026-09-25
+
+### Added
+
+- Added an option to exclude configured subjects from timetable data.
+- Added localized German and English labels for the subject-exclusion option.
+
+### Changed
+
+- Summary timetable attributes now consistently use the English technical field name `subject`.
+- Updated the dashboard example to use the normalized `subject` field.
+
+### Tests
+
+- Added regression coverage for excluded-subject defaults, coordinator filtering and summary schedule attributes.
+
 ## [0.8.0] - 2026-09-24
 
 ### Added
