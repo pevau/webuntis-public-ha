@@ -880,3 +880,65 @@ def test_semantic_events_do_not_repeat_persistent_old_metadata(
     }
     assert "lesson_substituted" not in event_types
     assert "lesson_room_changed" not in event_types
+
+
+def test_cache_fallback_rejects_missing_and_invalid_timestamp() -> None:
+    assert WebUntisPublicCoordinator._cache_is_usable_fallback(None) is False
+    assert WebUntisPublicCoordinator._cache_is_usable_fallback({}) is False
+    assert WebUntisPublicCoordinator._cache_is_usable_fallback(
+        {"fetched_at": "2026-09-25T12:00:00+00:00"}
+    ) is False
+
+
+def test_cache_fallback_accepts_recent_naive_timestamp(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fixed_now = datetime(2026, 9, 25, 12, 0, tzinfo=UTC)
+    monkeypatch.setattr(coordinator_module.dt_util, "utcnow", lambda: fixed_now)
+
+    assert WebUntisPublicCoordinator._cache_is_usable_fallback(
+        {"fetched_at": datetime(2026, 9, 25, 11, 0)}
+    ) is True
+
+
+def test_excluded_subjects_rejects_non_string_option() -> None:
+    item = _bare_coordinator()
+    item.entry = SimpleNamespace(options={OPT_EXCLUDE_SUBJECTS: ["Mathematik"]})
+
+    assert item._excluded_subjects() == set()
+
+
+def test_timetable_change_first_fetch_has_no_change() -> None:
+    item = _bare_coordinator()
+    item.hass = SimpleNamespace(config=SimpleNamespace(time_zone="Europe/Vienna"))
+
+    assert item._detect_timetable_change(Date(2026, 9, 21), None, []) is None
+
+
+def test_semantic_events_skip_day_missing_on_one_side() -> None:
+    item = _bare_coordinator()
+    tz = ZoneInfo("Europe/Vienna")
+    old = parse_lessons(
+        [
+            _entry(
+                datetime(2026, 9, 24, 8, 0, tzinfo=UTC),
+                datetime(2026, 9, 24, 8, 45, tzinfo=UTC),
+            )
+        ],
+        datetime(2026, 9, 24, 0, 0, tzinfo=tz),
+        datetime(2026, 9, 26, 0, 0, tzinfo=tz),
+        tz,
+    )
+    new = parse_lessons(
+        [
+            _entry(
+                datetime(2026, 9, 25, 8, 0, tzinfo=UTC),
+                datetime(2026, 9, 25, 8, 45, tzinfo=UTC),
+            )
+        ],
+        datetime(2026, 9, 24, 0, 0, tzinfo=tz),
+        datetime(2026, 9, 26, 0, 0, tzinfo=tz),
+        tz,
+    )
+
+    assert item._semantic_events(old, new) == []
