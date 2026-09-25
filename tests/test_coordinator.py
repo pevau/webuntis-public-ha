@@ -651,3 +651,53 @@ def test_save_cache_excludes_entries_older_than_120_days() -> None:
     saved = save.await_args.args[0]
     assert list(saved["weeks"]) == ["2026-09-21"]
     assert saved["weeks"]["2026-09-21"]["entries"] == [{"fresh": True}]
+
+
+
+def test_timetable_change_emits_lesson_cancelled_semantic_event(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    item = _bare_coordinator()
+    item.hass = SimpleNamespace(config=SimpleNamespace(time_zone="Europe/Vienna"))
+    monday = Date(2026, 9, 21)
+    now = datetime(2026, 9, 23, 12, 0, tzinfo=UTC)
+    monkeypatch.setattr(coordinator_module.dt_util, "now", lambda: now)
+
+    start = datetime(2026, 9, 24, 8, 0, tzinfo=UTC)
+    end = datetime(2026, 9, 24, 8, 45, tzinfo=UTC)
+    old = _entry(start, end, status="REGULAR")
+    new = _entry(start, end, status="CANCEL")
+
+    change = item._detect_timetable_change(monday, [old], [new])
+
+    assert change is not None
+    assert len(change["semantic_events"]) == 1
+    event = change["semantic_events"][0]
+    assert event["event_type"] == "lesson_cancelled"
+    assert event["subject"] == "Mathematik"
+    assert event["previous"]["status"] == "regular"
+    assert event["current"]["status"] == "cancelled"
+
+
+def test_timetable_change_emits_lesson_substituted_semantic_event(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    item = _bare_coordinator()
+    item.hass = SimpleNamespace(config=SimpleNamespace(time_zone="Europe/Vienna"))
+    monday = Date(2026, 9, 21)
+    now = datetime(2026, 9, 23, 12, 0, tzinfo=UTC)
+    monkeypatch.setattr(coordinator_module.dt_util, "now", lambda: now)
+
+    start = datetime(2026, 9, 24, 8, 0, tzinfo=UTC)
+    end = datetime(2026, 9, 24, 8, 45, tzinfo=UTC)
+    old = _entry(start, end, teacher="Anna Beispiel")
+    new = _entry(start, end, teacher="Max Mustermann", status="CHANGED")
+
+    change = item._detect_timetable_change(monday, [old], [new])
+
+    assert change is not None
+    assert len(change["semantic_events"]) == 1
+    event = change["semantic_events"][0]
+    assert event["event_type"] == "lesson_substituted"
+    assert event["previous"]["teacher"] == "Anna Beispiel"
+    assert event["current"]["teacher"] == "Max Mustermann"
