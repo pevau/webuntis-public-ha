@@ -942,3 +942,110 @@ def test_semantic_events_skip_day_missing_on_one_side() -> None:
     )
 
     assert item._semantic_events(old, new) == []
+
+
+def test_coordinator_constructor_initializes_primary_class(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    hass = SimpleNamespace(
+        config=SimpleNamespace(time_zone="Europe/Vienna"),
+        data={},
+    )
+    entry = SimpleNamespace(
+        entry_id="entry-1",
+        data={
+            coordinator_module.CONF_SERVER: "demo.webuntis.com",
+            coordinator_module.CONF_SCHOOL: "demo",
+            coordinator_module.CONF_SCHOOL_NAME: "Demo School",
+            coordinator_module.CONF_CLASS_ID: 123,
+            coordinator_module.CONF_CLASS_NAME: "5A",
+        },
+        options={},
+    )
+    session = object()
+    monkeypatch.setattr(coordinator_module, "async_get_clientsession", lambda _hass: session)
+    monkeypatch.setattr(
+        coordinator_module.DataUpdateCoordinator,
+        "__init__",
+        lambda self, *args, **kwargs: None,
+    )
+    monkeypatch.setattr(
+        coordinator_module,
+        "Store",
+        lambda hass, version, key: SimpleNamespace(key=key),
+    )
+
+    item = WebUntisPublicCoordinator(hass, entry)
+
+    assert item.server == "demo.webuntis.com"
+    assert item.school == "demo"
+    assert item.class_id == 123
+    assert item.class_name == "5A"
+    assert item.school_name == "Demo School"
+    assert item._session is session
+    assert item._store.key == "webuntis_public.entry-1"
+    assert item.data_source == "unavailable"
+    assert item._weeks == {}
+
+
+def test_coordinator_constructor_uses_secondary_class_store(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    hass = SimpleNamespace(config=SimpleNamespace(time_zone="Europe/Vienna"), data={})
+    entry = SimpleNamespace(
+        entry_id="entry-1",
+        data={
+            coordinator_module.CONF_SERVER: "demo.webuntis.com",
+            coordinator_module.CONF_CLASS_ID: 123,
+        },
+        options={},
+    )
+    monkeypatch.setattr(coordinator_module, "async_get_clientsession", lambda _hass: object())
+    monkeypatch.setattr(
+        coordinator_module.DataUpdateCoordinator,
+        "__init__",
+        lambda self, *args, **kwargs: None,
+    )
+    monkeypatch.setattr(
+        coordinator_module,
+        "Store",
+        lambda hass, version, key: SimpleNamespace(key=key),
+    )
+
+    item = WebUntisPublicCoordinator(hass, entry, class_id=456, class_name="5B")
+
+    assert item.class_id == 456
+    assert item.class_name == "5B"
+    assert item.school_name == "demo.webuntis.com"
+    assert item._store.key == "webuntis_public.entry-1.456"
+
+
+def test_cached_lessons_skips_uncached_weeks() -> None:
+    item = _bare_coordinator()
+    item.hass = SimpleNamespace(config=SimpleNamespace(time_zone="Europe/Vienna"))
+    item.entry = SimpleNamespace(options={})
+
+    assert item.cached_lessons_between(
+        datetime(2026, 9, 21, 7, 0, tzinfo=UTC),
+        datetime(2026, 9, 29, 10, 0, tzinfo=UTC),
+    ) == []
+
+
+def test_semantic_events_skip_day_missing_on_both_sides() -> None:
+    item = _bare_coordinator()
+
+    assert item._semantic_events([], []) == []
+
+
+def test_snapshot_returns_diagnostic_state() -> None:
+    item = _bare_coordinator()
+    item._data_source = "cache"
+    item._last_refresh_attempt = None
+    item._last_error = None
+    item._last_error_at = None
+    item._consecutive_failures = 0
+
+    snapshot = item._snapshot()
+
+    assert snapshot == item.diagnostic_state
+    assert snapshot["data_source"] == "cache"
