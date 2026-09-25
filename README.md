@@ -4,7 +4,7 @@
 [![Version](https://img.shields.io/github/v/release/pevau/webuntis-public-ha)](https://github.com/pevau/webuntis-public-ha/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/pevau/webuntis-public-ha/total)](https://tooomm.github.io/github-release-stats/?username=pevau&repository=webuntis-public-ha)
 [![Tests](https://github.com/pevau/webuntis-public-ha/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/pevau/webuntis-public-ha/actions/workflows/tests.yml)
-[![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](https://github.com/pevau/webuntis-public-ha/actions/workflows/tests.yml)
+[![Coverage](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fpevau%2Fwebuntis-public-ha%2Fmain%2F.github%2Fbadges%2Fcoverage.json)](https://github.com/pevau/webuntis-public-ha/actions/workflows/tests.yml)
 [![Open Issues](https://img.shields.io/github/issues/pevau/webuntis-public-ha?style=flat&label=Open%20Issues)](https://github.com/pevau/webuntis-public-ha/issues)
 
 Custom integration for Home Assistant that imports public WebUntis timetables **without a WebUntis login**.
