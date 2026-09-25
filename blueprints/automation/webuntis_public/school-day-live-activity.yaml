@@ -86,10 +86,9 @@ actions:
           - device_id: !input notification_device
             domain: mobile_app
             type: notify
+            title: "{{ activity_title }} · Test"
+            message: "Mathematics · Room 204"
             data:
-              title: "{{ activity_title }} · Test"
-              message: "Mathematics · Room 204"
-              data:
                 tag: "{{ tag }}"
                 live_update: true
                 silent: true
@@ -105,9 +104,8 @@ actions:
           - device_id: !input notification_device
             domain: mobile_app
             type: notify
+            message: clear_notification
             data:
-              message: clear_notification
-              data:
                 tag: "{{ tag }}"
     default:
       - variables:
@@ -138,8 +136,7 @@ actions:
       - device_id: !input notification_device
         domain: mobile_app
         type: notify
-        data:
-          title: "{{ activity_title }}"
+        title: "{{ activity_title }}"
           message: "{{ message_text | trim }}"
           data:
             tag: "{{ tag }}"
