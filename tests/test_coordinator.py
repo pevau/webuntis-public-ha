@@ -762,8 +762,8 @@ def test_timetable_change_emits_time_changed_semantic_event(
         if event["event_type"] == "lesson_time_changed"
     ]
     assert len(events) == 1
-    assert events[0]["previous"]["start"].endswith("08:00:00+00:00")
-    assert events[0]["current"]["start"].endswith("09:00:00+00:00")
+    assert events[0]["previous"]["start"].endswith("10:00:00+02:00")
+    assert events[0]["current"]["start"].endswith("11:00:00+02:00")
 
 
 
@@ -802,8 +802,8 @@ def test_timetable_change_emits_school_start_changed(
         if event["event_type"] == "school_start_changed"
     ]
     assert len(events) == 1
-    assert events[0]["previous_start"].endswith("08:00:00+00:00")
-    assert events[0]["current_start"].endswith("09:00:00+00:00")
+    assert events[0]["previous_start"].endswith("10:00:00+02:00")
+    assert events[0]["current_start"].endswith("11:00:00+02:00")
 
 
 def test_timetable_change_emits_school_end_changed(
@@ -841,5 +841,5 @@ def test_timetable_change_emits_school_end_changed(
         if event["event_type"] == "school_end_changed"
     ]
     assert len(events) == 1
-    assert events[0]["previous_end"].endswith("12:45:00+00:00")
-    assert events[0]["current_end"].endswith("13:45:00+00:00")
+    assert events[0]["previous_end"].endswith("14:45:00+02:00")
+    assert events[0]["current_end"].endswith("15:45:00+02:00")
