@@ -664,6 +664,57 @@ class WebUntisPublicCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 )
 
         events.extend(self._lesson_time_change_events(old_lessons, new_lessons))
+        events.extend(self._school_day_boundary_events(old_lessons, new_lessons))
+        return events
+
+    def _school_day_boundary_events(
+        self,
+        old_lessons: list[WebUntisLesson],
+        new_lessons: list[WebUntisLesson],
+    ) -> list[dict[str, Any]]:
+        """Detect changed first/last lesson times for each school day."""
+        events: list[dict[str, Any]] = []
+        dates = sorted(
+            {lesson.start.date() for lesson in old_lessons}
+            & {lesson.start.date() for lesson in new_lessons}
+        )
+
+        for day in dates:
+            old_day = sorted(
+                (lesson for lesson in old_lessons if lesson.start.date() == day),
+                key=lambda lesson: (lesson.start, lesson.end),
+            )
+            new_day = sorted(
+                (lesson for lesson in new_lessons if lesson.start.date() == day),
+                key=lambda lesson: (lesson.start, lesson.end),
+            )
+            if not old_day or not new_day:
+                continue
+
+            old_first, new_first = old_day[0], new_day[0]
+            if old_first.start != new_first.start:
+                events.append(
+                    {
+                        "event_type": "school_start_changed",
+                        "class_name": self.class_name,
+                        "date": day.isoformat(),
+                        "previous_start": old_first.start.isoformat(),
+                        "current_start": new_first.start.isoformat(),
+                    }
+                )
+
+            old_last, new_last = old_day[-1], new_day[-1]
+            if old_last.end != new_last.end:
+                events.append(
+                    {
+                        "event_type": "school_end_changed",
+                        "class_name": self.class_name,
+                        "date": day.isoformat(),
+                        "previous_end": old_last.end.isoformat(),
+                        "current_end": new_last.end.isoformat(),
+                    }
+                )
+
         return events
 
     def _lesson_time_change_events(
