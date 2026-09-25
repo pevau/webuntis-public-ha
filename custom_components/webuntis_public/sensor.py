@@ -6,7 +6,7 @@ from typing import Any
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import PERCENTAGE
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_track_time_interval
@@ -84,10 +84,15 @@ class _WebUntisSensorBase(
             self.async_on_remove(
                 async_track_time_interval(
                     self.hass,
-                    lambda _now: self.async_write_ha_state(),
+                    self._handle_time_interval,
                     timedelta(minutes=1),
                 )
             )
+
+    @callback
+    def _handle_time_interval(self, _now: datetime) -> None:
+        """Refresh time-sensitive sensor state from the event loop."""
+        self.async_write_ha_state()
 
     def _lessons_for_day(self, offset_days: int = 0) -> list[WebUntisLesson]:
         start, end = day_bounds(self.hass, offset_days)
