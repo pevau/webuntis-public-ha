@@ -23,13 +23,13 @@ blueprint:
           filter:
             - integration: webuntis_public
               domain: sensor
-    notification_service:
-      name: Mobile App notify service
-      description: >
-        Enter the Home Assistant Companion App notify service for the device,
-        for example notify.mobile_app_peters_iphone.
+    notification_device:
+      name: Mobile App device
+      description: Select the Home Assistant Companion App device for the Live Activity.
       selector:
-        text:
+        device:
+          filter:
+            - integration: mobile_app
     activity_title:
       name: Title
       default: School
@@ -58,7 +58,7 @@ variables:
   current_lesson_entity: !input current_lesson
   activity_title: !input activity_title
   dashboard_url: !input dashboard_url
-  notification_service: !input notification_service
+  notification_device: !input notification_device
   status: "{{ states(school_status_entity) }}"
   current_subject: "{{ state_attr(school_status_entity, 'current_subject') }}"
   current_end: "{{ state_attr(school_status_entity, 'current_lesson_end_time') }}"
@@ -83,7 +83,9 @@ actions:
               {{ trigger.id | default('') == 'test'
                  and trigger.event.data.device_identifier | default('') == selected_device_identifier }}
         sequence:
-          - action: "{{ notification_service }}"
+          - device_id: !input notification_device
+            domain: mobile_app
+            type: notify
             data:
               title: "{{ activity_title }} · Test"
               message: "Mathematics · Room 204"
@@ -100,7 +102,9 @@ actions:
           - condition: template
             value_template: "{{ status in ['after_school', 'school_free', 'unknown', 'unavailable'] }}"
         sequence:
-          - action: "{{ notification_service }}"
+          - device_id: !input notification_device
+            domain: mobile_app
+            type: notify
             data:
               message: clear_notification
               data:
@@ -131,7 +135,9 @@ actions:
             {% else %}
               School day
             {% endif %}
-      - action: "{{ notification_service }}"
+      - device_id: !input notification_device
+        domain: mobile_app
+        type: notify
         data:
           title: "{{ activity_title }}"
           message: "{{ message_text | trim }}"
