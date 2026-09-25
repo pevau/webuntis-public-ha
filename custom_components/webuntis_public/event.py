@@ -32,7 +32,11 @@ class WebUntisTimetableChangeEvent(
     _attr_has_entity_name = True
     _attr_translation_key = "timetable_change"
     _attr_icon = "mdi:calendar-sync"
-    _attr_event_types = ["timetable_changed"]
+    _attr_event_types = [
+        "timetable_changed",
+        "lesson_cancelled",
+        "lesson_substituted",
+    ]
 
     def __init__(
         self,
@@ -62,6 +66,10 @@ class WebUntisTimetableChangeEvent(
             )
             for change in changes:
                 self._trigger_event("timetable_changed", change)
+                for semantic_event in change.get("semantic_events", []):
+                    event_type = semantic_event.get("event_type")
+                    if event_type in self._attr_event_types:
+                        self._trigger_event(event_type, semantic_event)
             self._last_sequence = sequence
 
         super()._handle_coordinator_update()
