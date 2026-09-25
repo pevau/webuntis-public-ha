@@ -2,6 +2,7 @@
 
 [![HACS](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/custom-components/hacs)
 [![Version](https://img.shields.io/github/v/release/pevau/webuntis-public-ha)](https://github.com/pevau/webuntis-public-ha/releases/latest)
+[![Tests](https://github.com/pevau/webuntis-public-ha/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/pevau/webuntis-public-ha/actions/workflows/tests.yml)
 [![Downloads](https://img.shields.io/github/downloads/pevau/webuntis-public-ha/total)](https://tooomm.github.io/github-release-stats/?username=pevau&repository=webuntis-public-ha)
 [![Latest Release](https://img.shields.io/github/release-date/pevau/webuntis-public-ha?style=flat&label=Latest%20Release)](https://github.com/pevau/webuntis-public-ha/releases)
 [![Open Issues](https://img.shields.io/github/issues/pevau/webuntis-public-ha?style=flat&label=Open%20Issues)](https://github.com/pevau/webuntis-public-ha/issues)
