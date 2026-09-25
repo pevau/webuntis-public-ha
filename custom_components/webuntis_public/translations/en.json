@@ -418,6 +418,9 @@
     "button": {
       "refresh_timetable": {
         "name": "Refresh timetable"
+      },
+      "test_live_activity": {
+        "name": "Test Live Activity"
       }
     },
     "event": {
