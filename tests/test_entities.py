@@ -658,3 +658,96 @@ def test_calendar_event_property_returns_none_without_visible_lessons(
     monkeypatch.setattr(calendar_module.dt_util, "now", lambda: BASE)
 
     assert calendar.event is None
+
+
+def test_next_lesson_sensor_reports_empty_state(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    sensor = sensor_module.WebUntisNextLessonSensor(_entry(), FakeCoordinator([]))
+    monkeypatch.setattr(sensor_module, "local_now", lambda _hass: BASE)
+
+    assert sensor.native_value is None
+    assert sensor.extra_state_attributes == {}
+
+
+def test_next_school_day_reports_none_when_search_window_is_empty() -> None:
+    sensor = sensor_module.WebUntisNextSchoolDaySensor(_entry(), FakeCoordinator())
+    _set_day_lookup(sensor, {})
+
+    assert sensor.native_value is None
+    assert sensor.extra_state_attributes == {}
+
+
+def test_next_school_day_summary_reports_empty_when_no_school_day() -> None:
+    sensor = sensor_module.WebUntisNextSchoolDaySummarySensor(
+        _entry(),
+        FakeCoordinator(),
+    )
+    _set_day_lookup(sensor, {})
+
+    assert sensor.native_value is None
+    assert sensor.extra_state_attributes == {}
+
+
+@pytest.mark.parametrize(
+    ("minutes", "expected"),
+    [
+        (-1, 0.0),
+        (0, 0.0),
+        (120, 100.0),
+        (121, 100.0),
+    ],
+)
+def test_school_day_progress_clamps_before_and_after_school(
+    monkeypatch: pytest.MonkeyPatch,
+    minutes: int,
+    expected: float,
+) -> None:
+    sensor = sensor_module.WebUntisSchoolDayProgressSensor(_entry(), FakeCoordinator())
+    _set_today(sensor, [_lesson(0, 45), _lesson(60, 120)])
+    monkeypatch.setattr(
+        sensor_module,
+        "local_now",
+        lambda _hass: BASE + timedelta(minutes=minutes),
+    )
+
+    assert sensor.native_value == expected
+
+
+@pytest.mark.parametrize(
+    ("lessons", "minutes", "expected"),
+    [
+        ([], 0, None),
+        ([_lesson(0, 45)], -1, 0.0),
+        ([_lesson(0, 45)], 45, 100.0),
+        ([_lesson(0, 45)], 46, 100.0),
+    ],
+)
+def test_daily_summary_progress_boundaries(
+    monkeypatch: pytest.MonkeyPatch,
+    lessons,
+    minutes: int,
+    expected: float | None,
+) -> None:
+    sensor = sensor_module.WebUntisDailySummarySensor(_entry(), FakeCoordinator())
+    _set_today(sensor, lessons)
+    monkeypatch.setattr(
+        sensor_module,
+        "local_now",
+        lambda _hass: BASE + timedelta(minutes=minutes),
+    )
+
+    assert sensor.extra_state_attributes["school_day_progress"] == expected
+
+
+def test_sensor_base_day_lookup_uses_day_bounds(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    coordinator = FakeCoordinator()
+    sensor = sensor_module.WebUntisSchoolStatusSensor(_entry(), coordinator)
+    start = BASE
+    end = BASE + timedelta(days=1)
+    monkeypatch.setattr(sensor_module, "day_bounds", lambda _hass, offset: (start, end))
+
+    assert sensor._lessons_for_day(2) == coordinator.cached_lessons_between(start, end)
+    assert sensor._lessons_today() == coordinator.cached_lessons_between(start, end)
