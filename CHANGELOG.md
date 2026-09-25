@@ -2,6 +2,22 @@
 
 All notable changes to **WebUntis Public Timetable** are documented here.
 
+## [0.8.7] - 2026-09-26
+
+### Changed
+
+- Improved the School Day Live Activity blueprint with native Home Assistant Companion App device selection, avoiding manual `notify.mobile_app_*` service names.
+
+### Fixed
+
+- Fixed thread safety for minute-based updates of time-sensitive sensors by keeping state writes on the Home Assistant event loop.
+- Fixed the School Day Live Activity notification payload so Companion App-specific notification data is sent through a supported mobile app device action.
+- Fixed malformed Live Activity blueprint action structures discovered during Home Assistant validation.
+
+### Tests
+
+- Added regression coverage for the Live Activity diagnostic event and the event-loop-safe time callback.
+
 ## [0.8.6] - 2026-09-26
 
 ### Added
