@@ -12,3 +12,4 @@ Before using an example, replace the placeholder entity IDs such as `sensor.scho
 ## Automation blueprints
 
 - [Timetable change notifications](../blueprints/automation/webuntis_public/timetable-change-notifications.yaml) — choose which semantic timetable changes should send a notification and select the target mobile devices.
+- [School day Live Activity](../blueprints/automation/webuntis_public/school-day-live-activity.yaml) — show the current lesson or break as an iOS Live Activity / Android Live Update with an on-device countdown.
