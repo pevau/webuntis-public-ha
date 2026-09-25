@@ -2,6 +2,24 @@
 
 All notable changes to **WebUntis Public Timetable** are documented here.
 
+## [0.8.5] - 2026-09-25
+
+### Added
+
+- Added semantic timetable events for lesson cancellations, substitutions, room changes, time changes, and changed school start/end times.
+- Added a configurable timetable-change notification blueprint with selectable event types and mobile notification targets.
+- Added a school-day Live Activity blueprint for mobile devices with current lesson information and countdown updates.
+
+### Changed
+
+- Hardened semantic change detection so persistent WebUntis previous-value metadata does not trigger duplicate notifications.
+- Improved Live Activity entity selection by using the matching current-lesson sensor instead of inferring it across all integration entities.
+- Improved CI performance with dependency and virtual-environment caching and updated GitHub Actions runtimes.
+
+### Tests
+
+- Added regression coverage for semantic timetable events, timezone-aware event payloads, and persistent WebUntis change metadata.
+
 
 ## [0.8.1] - 2026-09-25
 
