@@ -18,9 +18,11 @@ blueprint:
       name: Devices to notify
       description: Select one or more devices that provide a notify entity.
       selector:
-        target:
-          integration: mobile_app
-          domain: notify
+        entity:
+          multiple: true
+          filter:
+            - integration: mobile_app
+              domain: notify
     notify_lesson_cancelled:
       name: Lesson cancelled
       default: true
