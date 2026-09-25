@@ -435,7 +435,7 @@ def test_class_select_without_input_shows_form(
     assert result["step_id"] == "class_select"
 
 
-def test_school_search_returns_empty_after_successful_empty_responses() -> None:
+def test_school_search_returns_empty_after_successful_empty_responses(\n    monkeypatch: pytest.MonkeyPatch,\n) -> None:
     class Response:
         async def __aenter__(self):
             return self
@@ -455,7 +455,8 @@ def test_school_search_returns_empty_after_successful_empty_responses() -> None:
 
     flow = WebUntisPublicConfigFlow()
     flow.hass = SimpleNamespace()
-    result = asyncio.run(flow._async_search_schools(Session(), "Nobody"))
+    monkeypatch.setattr(config_module, "async_get_clientsession", lambda _hass: Session())
+    result = asyncio.run(flow._async_search_schools("Nobody"))
 
     assert result == []
 
