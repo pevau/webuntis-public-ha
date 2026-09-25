@@ -89,7 +89,7 @@ actions:
             title: "{{ activity_title }} · Test"
             message: "Mathematics · Room 204"
             data:
-                tag: "{{ tag }}"
+              tag: "{{ tag }}"
                 live_update: true
                 silent: true
                 chronometer: true
@@ -106,7 +106,7 @@ actions:
             type: notify
             message: clear_notification
             data:
-                tag: "{{ tag }}"
+              tag: "{{ tag }}"
     default:
       - variables:
           countdown_to: >
@@ -137,9 +137,9 @@ actions:
         domain: mobile_app
         type: notify
         title: "{{ activity_title }}"
-          message: "{{ message_text | trim }}"
-          data:
-            tag: "{{ tag }}"
+        message: "{{ message_text | trim }}"
+        data:
+          tag: "{{ tag }}"
             live_update: true
             silent: true
             chronometer: "{{ seconds_remaining | int > 0 }}"
