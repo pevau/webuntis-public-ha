@@ -843,3 +843,36 @@ def test_timetable_change_emits_school_end_changed(
     assert len(events) == 1
     assert events[0]["previous_end"].endswith("14:45:00+02:00")
     assert events[0]["current_end"].endswith("15:45:00+02:00")
+
+
+
+def test_semantic_events_do_not_repeat_persistent_old_metadata(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    item = _bare_coordinator()
+    item.hass = SimpleNamespace(config=SimpleNamespace(time_zone="Europe/Vienna"))
+    monday = Date(2026, 9, 21)
+    monkeypatch.setattr(
+        coordinator_module.dt_util,
+        "now",
+        lambda: datetime(2026, 9, 23, 12, 0, tzinfo=UTC),
+    )
+    start = datetime(2026, 9, 24, 8, 0, tzinfo=UTC)
+    end = datetime(2026, 9, 24, 8, 45, tzinfo=UTC)
+
+    previous = _entry(start, end, teacher="Max", room="B202")
+    current = _entry(start, end, teacher="Max", room="B202")
+    previous["te"][0]["orgname"] = "Anna"
+    previous["ro"][0]["orgname"] = "A101"
+    current["te"][0]["orgname"] = "Anna"
+    current["ro"][0]["orgname"] = "A101"
+    current["lstext"] = "Updated information"
+
+    change = item._detect_timetable_change(monday, [previous], [current])
+
+    assert change is not None
+    event_types = {
+        event["event_type"] for event in change["semantic_events"]
+    }
+    assert "lesson_substituted" not in event_types
+    assert "lesson_room_changed" not in event_types
