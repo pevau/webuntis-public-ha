@@ -679,9 +679,6 @@ class WebUntisPublicCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 (lesson for lesson in new_lessons if lesson.start.date() == day),
                 key=lambda lesson: (lesson.start, lesson.end),
             )
-            if not old_day or not new_day:
-                continue
-
             old_first, new_first = old_day[0], new_day[0]
             if old_first.start != new_first.start:
                 events.append(
