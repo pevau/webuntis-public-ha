@@ -631,14 +631,8 @@ class WebUntisPublicCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 )
                 continue
 
-            subject_changed = (
-                previous.subjects != lesson.subjects
-                or bool(lesson.old_subjects)
-            )
-            teacher_changed = (
-                previous.teachers != lesson.teachers
-                or bool(lesson.old_teachers)
-            )
+            subject_changed = previous.subjects != lesson.subjects
+            teacher_changed = previous.teachers != lesson.teachers
             if subject_changed or teacher_changed:
                 events.append(
                     {
@@ -649,10 +643,7 @@ class WebUntisPublicCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     }
                 )
 
-            room_changed = (
-                previous.rooms != lesson.rooms
-                or bool(lesson.old_rooms)
-            )
+            room_changed = previous.rooms != lesson.rooms
             if room_changed:
                 events.append(
                     {
