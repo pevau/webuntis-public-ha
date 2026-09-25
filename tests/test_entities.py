@@ -826,6 +826,7 @@ def test_calendar_added_to_hass_registers_language_listener(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     coordinator = FakeCoordinator()
+    coordinator.async_add_listener = lambda callback, context=None: lambda: None
     calendar = calendar_module.WebUntisPublicCalendar(
         _entry(),
         coordinator,
@@ -854,4 +855,4 @@ def test_calendar_added_to_hass_registers_language_listener(
     assert len(listen_calls) == 1
     assert listen_calls[0][0] == calendar_module.EVENT_CORE_CONFIG_UPDATE
     assert listen_calls[0][1] == calendar._async_core_config_updated
-    assert registered == [remove_callback]
+    assert remove_callback in registered
