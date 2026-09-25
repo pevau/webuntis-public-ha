@@ -435,7 +435,9 @@ def test_class_select_without_input_shows_form(
     assert result["step_id"] == "class_select"
 
 
-def test_school_search_returns_empty_after_successful_empty_responses(\n    monkeypatch: pytest.MonkeyPatch,\n) -> None:
+def test_school_search_returns_empty_after_successful_empty_responses(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     class Response:
         async def __aenter__(self):
             return self
