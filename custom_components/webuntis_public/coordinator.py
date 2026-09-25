@@ -581,8 +581,75 @@ class WebUntisPublicCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 self._lesson_event_data(old_map[key])
                 for key in removed_keys[:20]
             ],
+            "semantic_events": self._semantic_events(old_lessons, new_lessons),
             "truncated": len(added_keys) > 20 or len(removed_keys) > 20,
         }
+
+    def _semantic_events(
+        self,
+        old_lessons: list[WebUntisLesson],
+        new_lessons: list[WebUntisLesson],
+    ) -> list[dict[str, Any]]:
+        """Return automation-friendly events for important timetable changes."""
+        events: list[dict[str, Any]] = []
+        old_by_slot: dict[tuple[str, str], list[WebUntisLesson]] = {}
+        for lesson in old_lessons:
+            key = (lesson.start.isoformat(), lesson.end.isoformat())
+            old_by_slot.setdefault(key, []).append(lesson)
+
+        for lesson in new_lessons:
+            key = (lesson.start.isoformat(), lesson.end.isoformat())
+            candidates = old_by_slot.get(key, [])
+            previous = next(
+                (
+                    candidate
+                    for candidate in candidates
+                    if candidate.subject == lesson.subject
+                ),
+                candidates[0] if len(candidates) == 1 else None,
+            )
+            if previous is None:
+                continue
+
+            base = {
+                "class_name": self.class_name,
+                "start": lesson.start.isoformat(),
+                "end": lesson.end.isoformat(),
+                "subject": lesson.subject,
+                "teacher": lesson.teacher,
+                "room": lesson.room,
+            }
+
+            if lesson.cancelled and not previous.cancelled:
+                events.append(
+                    {
+                        **base,
+                        "event_type": "lesson_cancelled",
+                        "previous": self._lesson_event_data(previous),
+                        "current": self._lesson_event_data(lesson),
+                    }
+                )
+                continue
+
+            subject_changed = (
+                previous.subjects != lesson.subjects
+                or bool(lesson.old_subjects)
+            )
+            teacher_changed = (
+                previous.teachers != lesson.teachers
+                or bool(lesson.old_teachers)
+            )
+            if subject_changed or teacher_changed:
+                events.append(
+                    {
+                        **base,
+                        "event_type": "lesson_substituted",
+                        "previous": self._lesson_event_data(previous),
+                        "current": self._lesson_event_data(lesson),
+                    }
+                )
+
+        return events
 
     @staticmethod
     def _lesson_fingerprint(lesson: WebUntisLesson) -> tuple[Any, ...]:
