@@ -868,8 +868,11 @@ def test_semantic_events_do_not_repeat_persistent_old_metadata(
     previous["position2"][0]["removed"] = previous["position2"][0]["current"].copy()
     current["position3"][0]["removed"] = current["position3"][0]["current"].copy()
     current["position2"][0]["removed"] = current["position2"][0]["current"].copy()
-    old_lessons = parse_lessons([previous], ZoneInfo("Europe/Vienna"))
-    new_lessons = parse_lessons([current], ZoneInfo("Europe/Vienna"))
+    tz = ZoneInfo("Europe/Vienna")
+    window_start = datetime(2026, 9, 24, 0, 0, tzinfo=tz)
+    window_end = datetime(2026, 9, 25, 0, 0, tzinfo=tz)
+    old_lessons = parse_lessons([previous], window_start, window_end, tz)
+    new_lessons = parse_lessons([current], window_start, window_end, tz)
 
     event_types = {
         event["event_type"]
