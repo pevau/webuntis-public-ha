@@ -1,0 +1,122 @@
+blueprint:
+  name: WebUntis – Timetable Change Notifications
+  description: >
+    Send notifications when the selected WebUntis public timetable reports
+    relevant changes. Choose which change types should notify you and which
+    notification-capable devices should receive them.
+  domain: automation
+  input:
+    timetable_event:
+      name: WebUntis timetable change event
+      description: Select the timetable change event entity for the class.
+      selector:
+        entity:
+          filter:
+            - integration: webuntis_public
+              domain: event
+    notification_targets:
+      name: Devices to notify
+      description: Select one or more devices that provide a notify entity.
+      selector:
+        target:
+          device:
+            integration: mobile_app
+    notify_lesson_cancelled:
+      name: Lesson cancelled
+      default: true
+      selector:
+        boolean:
+    notify_lesson_substituted:
+      name: Lesson substituted
+      default: true
+      selector:
+        boolean:
+    notify_lesson_room_changed:
+      name: Room changed
+      default: true
+      selector:
+        boolean:
+    notify_lesson_time_changed:
+      name: Lesson time changed
+      default: true
+      selector:
+        boolean:
+    notify_school_start_changed:
+      name: School start changed
+      default: true
+      selector:
+        boolean:
+    notify_school_end_changed:
+      name: School end changed
+      default: true
+      selector:
+        boolean:
+
+mode: queued
+max: 10
+
+variables:
+  notify_lesson_cancelled: !input notify_lesson_cancelled
+  notify_lesson_substituted: !input notify_lesson_substituted
+  notify_lesson_room_changed: !input notify_lesson_room_changed
+  notify_lesson_time_changed: !input notify_lesson_time_changed
+  notify_school_start_changed: !input notify_school_start_changed
+  notify_school_end_changed: !input notify_school_end_changed
+  event_type: "{{ trigger.to_state.attributes.event_type | default('') }}"
+  class_name: "{{ trigger.to_state.attributes.class_name | default('') }}"
+  subject: "{{ trigger.to_state.attributes.subject | default('Unterricht') }}"
+  previous: "{{ trigger.to_state.attributes.previous | default({}) }}"
+  current: "{{ trigger.to_state.attributes.current | default({}) }}"
+
+triggers:
+  - trigger: state
+    entity_id: !input timetable_event
+
+conditions:
+  - condition: template
+    value_template: >
+      {{ (event_type == 'lesson_cancelled' and notify_lesson_cancelled)
+         or (event_type == 'lesson_substituted' and notify_lesson_substituted)
+         or (event_type == 'lesson_room_changed' and notify_lesson_room_changed)
+         or (event_type == 'lesson_time_changed' and notify_lesson_time_changed)
+         or (event_type == 'school_start_changed' and notify_school_start_changed)
+         or (event_type == 'school_end_changed' and notify_school_end_changed) }}
+
+actions:
+  - variables:
+      notification_title: >
+        {% if event_type == 'lesson_cancelled' %}Unterricht fällt aus
+        {% elif event_type == 'lesson_substituted' %}Vertretung geändert
+        {% elif event_type == 'lesson_room_changed' %}Raum geändert
+        {% elif event_type == 'lesson_time_changed' %}Unterrichtszeit geändert
+        {% elif event_type == 'school_start_changed' %}Schulbeginn geändert
+        {% elif event_type == 'school_end_changed' %}Schulschluss geändert
+        {% else %}Stundenplan geändert{% endif %}
+      notification_message: >
+        {% if event_type == 'lesson_cancelled' %}
+          {{ subject }}{% if class_name %} ({{ class_name }}){% endif %} fällt aus.
+        {% elif event_type == 'lesson_substituted' %}
+          {{ subject }}{% if class_name %} ({{ class_name }}){% endif %}:
+          {% if previous.teacher and current.teacher %}
+            {{ previous.teacher }} → {{ current.teacher }}
+          {% elif current.teacher %}Neue Lehrkraft: {{ current.teacher }}
+          {% else %}Vertretung wurde geändert.{% endif %}
+        {% elif event_type == 'lesson_room_changed' %}
+          {{ subject }}{% if class_name %} ({{ class_name }}){% endif %}:
+          {{ previous.room | default('–', true) }} → {{ current.room | default('–', true) }}
+        {% elif event_type == 'lesson_time_changed' %}
+          {{ subject }}{% if class_name %} ({{ class_name }}){% endif %} wurde zeitlich verschoben.
+        {% elif event_type == 'school_start_changed' %}
+          Schulbeginn{% if class_name %} für {{ class_name }}{% endif %} wurde geändert:
+          {{ as_timestamp(trigger.to_state.attributes.previous_start) | timestamp_custom('%H:%M', true) }}
+          → {{ as_timestamp(trigger.to_state.attributes.current_start) | timestamp_custom('%H:%M', true) }}.
+        {% elif event_type == 'school_end_changed' %}
+          Schulschluss{% if class_name %} für {{ class_name }}{% endif %} wurde geändert:
+          {{ as_timestamp(trigger.to_state.attributes.previous_end) | timestamp_custom('%H:%M', true) }}
+          → {{ as_timestamp(trigger.to_state.attributes.current_end) | timestamp_custom('%H:%M', true) }}.
+        {% endif %}
+  - action: notify.send_message
+    target: !input notification_targets
+    data:
+      title: "{{ notification_title | trim }}"
+      message: "{{ notification_message | trim }}"
