@@ -68,12 +68,20 @@ variables:
   room: "{{ state_attr(current_lesson_entity, 'room') or '' }}"
   tag: >
     webuntis_school_day_{{ school_status_entity | replace('.', '_') }}
+  selected_device_identifier: >
+    {{ device_attr(school_status_entity, 'identifiers')
+       | selectattr(0, 'eq', 'webuntis_public')
+       | map(attribute=1)
+       | first
+       | default('') }}
 
 actions:
   - choose:
       - conditions:
           - condition: template
-            value_template: "{{ trigger.id | default('') == 'test' }}"
+            value_template: >
+              {{ trigger.id | default('') == 'test'
+                 and trigger.event.data.device_identifier | default('') == selected_device_identifier }}
         sequence:
           - action: notify.send_message
             target: !input notification_targets
