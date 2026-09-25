@@ -961,7 +961,15 @@ def test_coordinator_constructor_initializes_primary_class(
     )
     monkeypatch.setattr(coordinator_module, "async_get_clientsession", lambda _hass: object())
     monkeypatch.setattr(coordinator_module.DataUpdateCoordinator, "__init__", lambda self, *args, **kwargs: None)
-    monkeypatch.setattr(coordinator_module, "Store", SimpleNamespace)
+    class FakeStore:
+        @classmethod
+        def __class_getitem__(cls, _item):
+            return cls
+
+        def __init__(self, hass, version, key):
+            self.key = key
+
+    monkeypatch.setattr(coordinator_module, "Store", FakeStore)
 
     item = WebUntisPublicCoordinator(hass, entry)
 
@@ -988,7 +996,15 @@ def test_coordinator_constructor_uses_secondary_class_store(
     )
     monkeypatch.setattr(coordinator_module, "async_get_clientsession", lambda _hass: object())
     monkeypatch.setattr(coordinator_module.DataUpdateCoordinator, "__init__", lambda self, *args, **kwargs: None)
-    monkeypatch.setattr(coordinator_module, "Store", SimpleNamespace)
+    class FakeStore:
+        @classmethod
+        def __class_getitem__(cls, _item):
+            return cls
+
+        def __init__(self, hass, version, key):
+            self.key = key
+
+    monkeypatch.setattr(coordinator_module, "Store", FakeStore)
 
     item = WebUntisPublicCoordinator(hass, entry, class_id=456, class_name="5B")
 
