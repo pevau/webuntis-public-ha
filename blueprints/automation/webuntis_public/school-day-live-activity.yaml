@@ -25,10 +25,22 @@ blueprint:
               domain: sensor
     notify_services:
       name: Mobile notification actions
-      description: >
-        Enter a YAML list of Home Assistant Companion mobile notification
-        actions that should receive the Live Activity. Example:
-        ["notify.mobile_app_iphone", "notify.mobile_app_ipad"]
+      description: |
+        Enter the Home Assistant Companion notification action for each phone
+        that should receive the Live Activity.
+
+        Important: This field expects a YAML list, so every action must start
+        with a dash (-), even when you only use one phone.
+
+        One phone:
+          - notify.mobile_app_iphone
+
+        Multiple phones:
+          - notify.mobile_app_iphone
+          - notify.mobile_app_iphone_2
+
+        Use the same notify.mobile_app_* action that you would use when sending
+        a notification manually from Home Assistant.
       selector:
         object:
     activity_title:
