@@ -103,87 +103,78 @@ variables:
        | default('') }}
 
 actions:
+  - variables:
+      is_test: >
+        {{ trigger.id | default('') == 'test'
+           and trigger.event.data.device_identifier | default('') == selected_device_identifier }}
   - choose:
       - conditions:
           - condition: template
-            value_template: >
-              {{ trigger.id | default('') == 'test'
-                 and trigger.event.data.device_identifier | default('') == selected_device_identifier }}
+            value_template: "{{ is_test }}"
         sequence:
+          - variables:
+              test_steps:
+                - status: before_school
+                  subject: Mathematics
+                  room: ""
+                  next_subject: Mathematics
+                  seconds: 5
+                - status: lesson
+                  subject: Mathematics
+                  room: Room 204
+                  next_subject: English
+                  seconds: 10
+                - status: break
+                  subject: ""
+                  room: ""
+                  next_subject: English
+                  seconds: 5
+                - status: lesson
+                  subject: English
+                  room: Room 105
+                  next_subject: ""
+                  seconds: 10
           - repeat:
-              for_each: "{{ notify_services }}"
+              for_each: "{{ test_steps }}"
               sequence:
-                - action: "{{ repeat.item }}"
-                  data:
-                    title: "{{ activity_title }} · Test"
-                    message: "School starts soon · First: Mathematics"
-                    data:
-                      tag: webuntis_test
-                      live_update: true
-                      notification_icon: "{{ notification_icon }}"
-                      notification_icon_color: "{{ notification_icon_color }}"
-                      progress_bar_direction: increasing
-          - delay: "00:00:05"
-          - repeat:
-              for_each: "{{ notify_services }}"
-              sequence:
-                - action: "{{ repeat.item }}"
-                  data:
-                    title: "{{ activity_title }} · Test"
-                    message: "Mathematics · Room 204"
-                    data:
-                      tag: webuntis_test
-                      live_update: true
-                      notification_icon: "{{ notification_icon }}"
-                      notification_icon_color: "{{ notification_icon_color }}"
-                      progress_bar_direction: increasing
-                      chronometer: true
-                      when: 10
-                      when_relative: true
-                      progress_bar_direction: increasing
-                      notification_icon: "{{ notification_icon }}"
-                      notification_icon_color: "{{ notification_icon_color }}"
-          - delay: "00:00:10"
-          - repeat:
-              for_each: "{{ notify_services }}"
-              sequence:
-                - action: "{{ repeat.item }}"
-                  data:
-                    title: "{{ activity_title }} · Test"
-                    message: "Break · Next: English"
-                    data:
-                      tag: webuntis_test
-                      live_update: true
-                      notification_icon: "{{ notification_icon }}"
-                      notification_icon_color: "{{ notification_icon_color }}"
-                      progress_bar_direction: increasing
-                      chronometer: true
-                      when: 5
-                      when_relative: true
-                      progress_bar_direction: increasing
-                      notification_icon: "{{ notification_icon }}"
-                      notification_icon_color: "{{ notification_icon_color }}"
-          - delay: "00:00:05"
-          - repeat:
-              for_each: "{{ notify_services }}"
-              sequence:
-                - action: "{{ repeat.item }}"
-                  data:
-                    title: "{{ activity_title }} · Test"
-                    message: "English · Room 105"
-                    data:
-                      tag: webuntis_test
-                      live_update: true
-                      notification_icon: "{{ notification_icon }}"
-                      notification_icon_color: "{{ notification_icon_color }}"
-                      progress_bar_direction: increasing
-                      chronometer: true
-                      when: 10
-                      when_relative: true
-                      progress_bar_direction: increasing
-                      notification_icon: "{{ notification_icon }}"
-                      notification_icon_color: "{{ notification_icon_color }}"
-          - delay: "00:00:10"
+                - variables:
+                    effective_status: "{{ repeat.item.status }}"
+                    effective_subject: "{{ repeat.item.subject }}"
+                    effective_room: "{{ repeat.item.room }}"
+                    effective_next_subject: "{{ repeat.item.next_subject }}"
+                    effective_seconds: "{{ repeat.item.seconds }}"
+                    effective_tag: webuntis_test
+                    effective_title: "{{ activity_title }} · Test"
+                    effective_message: >
+                      {% if effective_status == 'lesson' %}
+                        {{ effective_subject or 'Lesson' }}{% if effective_room %} · {{ effective_room }}{% endif %}
+                      {% elif effective_status == 'break' %}
+                        Break{% if effective_next_subject %} · Next: {{ effective_next_subject }}{% endif %}
+                      {% elif effective_status == 'before_school' %}
+                        {% if effective_next_subject %}First: {{ effective_next_subject }}{% else %}School starts soon{% endif %}
+                      {% else %}
+                        School day
+                      {% endif %}
+                - repeat:
+                    for_each: "{{ notify_services }}"
+                    sequence:
+                      - action: "{{ repeat.item }}"
+                        data:
+                          title: "{{ effective_title }}"
+                          message: "{{ effective_message | trim }}"
+                          data:
+                            tag: "{{ effective_tag }}"
+                            live_update: true
+                            silent: true
+                            chronometer: "{{ effective_seconds | int > 0 }}"
+                            when: "{{ effective_seconds | int }}"
+                            when_relative: true
+                            notification_icon: "{{ notification_icon }}"
+                            notification_icon_color: "{{ notification_icon_color }}"
+                            progress_bar_direction: increasing
+                            url: "{{ dashboard_url }}"
+                - delay:
+                    seconds: "{{ effective_seconds | int }}"
           - repeat:
               for_each: "{{ notify_services }}"
               sequence:
@@ -220,13 +211,20 @@ actions:
             {% if countdown_to %}
               {{ [0, (as_timestamp(countdown_to) - as_timestamp(now())) | int] | max }}
             {% else %}0{% endif %}
-          message_text: >
-            {% if status == 'lesson' %}
-              {{ current_subject or 'Lesson' }}{% if room %} · {{ room }}{% endif %}
-            {% elif status == 'break' %}
-              Break{% if next_subject %} · Next: {{ next_subject }}{% endif %}
-            {% elif status == 'before_school' %}
-              {% if next_subject %}First: {{ next_subject }}{% else %}School starts soon{% endif %}
+          effective_status: "{{ status }}"
+          effective_subject: "{{ current_subject or '' }}"
+          effective_room: "{{ room }}"
+          effective_next_subject: "{{ next_subject or '' }}"
+          effective_seconds: "{{ seconds_remaining }}"
+          effective_tag: "{{ tag }}"
+          effective_title: "{{ activity_title }}"
+          effective_message: >
+            {% if effective_status == 'lesson' %}
+              {{ effective_subject or 'Lesson' }}{% if effective_room %} · {{ effective_room }}{% endif %}
+            {% elif effective_status == 'break' %}
+              Break{% if effective_next_subject %} · Next: {{ effective_next_subject }}{% endif %}
+            {% elif effective_status == 'before_school' %}
+              {% if effective_next_subject %}First: {{ effective_next_subject }}{% else %}School starts soon{% endif %}
             {% else %}
               School day
             {% endif %}
@@ -235,14 +233,14 @@ actions:
           sequence:
             - action: "{{ repeat.item }}"
               data:
-                title: "{{ activity_title }}"
-                message: "{{ message_text | trim }}"
+                title: "{{ effective_title }}"
+                message: "{{ effective_message | trim }}"
                 data:
-                  tag: "{{ tag }}"
+                  tag: "{{ effective_tag }}"
                   live_update: true
                   silent: true
-                  chronometer: "{{ seconds_remaining | int > 0 }}"
-                  when: "{{ seconds_remaining | int }}"
+                  chronometer: "{{ effective_seconds | int > 0 }}"
+                  when: "{{ effective_seconds | int }}"
                   when_relative: true
                   notification_icon: "{{ notification_icon }}"
                   notification_icon_color: "{{ notification_icon_color }}"
