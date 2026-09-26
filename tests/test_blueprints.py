@@ -41,18 +41,29 @@ def test_live_activity_blueprint_uses_mobile_notify_action_list() -> None:
 
 
 def test_live_activity_test_button_simulates_school_day() -> None:
-    """The diagnostic test runs start, lesson, break, lesson and clear phases."""
+    """The diagnostic test simulates the school day using the production payload."""
+    blueprint = _load_blueprint()
     text = BLUEPRINT.read_text(encoding="utf-8")
 
-    assert 'for_each: "{{ notify_services }}"' in text
-    assert text.count("tag: webuntis_test") == 5
-    assert 'message: "School starts soon · First: Mathematics"' in text
-    assert 'message: "Mathematics · Room 204"' in text
-    assert 'message: "Break · Next: English"' in text
-    assert 'message: "English · Room 105"' in text
+    assert "test_steps" in text
+    assert "status: before_school" in text
+    assert text.count("status: lesson") >= 2
+    assert "status: break" in text
+    assert "subject: Mathematics" in text
+    assert "subject: English" in text
+    assert "Room 204" in text
+    assert "Room 105" in text
     assert "message: clear_notification" in text
-    assert 'delay: "00:00:05"' in text
-    assert 'delay: "00:00:10"' in text
+
+    # Test and production both use the same effective payload fields.
+    assert 'message: "{{ effective_message | trim }}"' in text
+    assert 'notification_icon: "{{ notification_icon }}"' in text
+    assert 'notification_icon_color: "{{ notification_icon_color }}"' in text
+    assert "progress_bar_direction: increasing" in text
+    assert 'url: "{{ dashboard_url }}"' in text
+
+    actions = blueprint["actions"]
+    assert actions
 
 
 def test_live_activity_blueprint_notification_appearance() -> None:
