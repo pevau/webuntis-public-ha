@@ -2,6 +2,17 @@
 
 All notable changes to **WebUntis Public Timetable** are documented here.
 
+## [0.8.10] - 2026-09-26
+
+### Changed
+
+- Refactored the Live Activity diagnostic simulation to use the same notification payload fields as normal school-day updates.
+- The diagnostic sequence now exercises the configured notification icon, icon color, progress direction, dashboard URL, chronometer, and Live Activity options.
+
+### Tests
+
+- Updated blueprint regression tests for the shared Live Activity payload and simulated school-day phases.
+
 ## [0.8.9] - 2026-09-26
 
 ### Added
