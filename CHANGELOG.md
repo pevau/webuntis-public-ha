@@ -2,6 +2,19 @@
 
 All notable changes to **WebUntis Public Timetable** are documented here.
 
+## [0.8.8] - 2026-09-26
+
+### Changed
+
+- Switched the School Day Live Activity blueprint to direct `notify.mobile_app_*` notification actions, matching the Companion App path that reliably starts Live Activities.
+- Added support for sending the same Live Activity to multiple mobile notification actions.
+- Expanded the diagnostic Live Activity button to simulate a complete school-day flow: before school, lesson, break, lesson, and school end.
+- Improved the blueprint input guidance with explicit YAML examples for one or multiple mobile notification actions.
+
+### Tests
+
+- Added automated regression coverage for the Live Activity blueprint notification input and diagnostic school-day sequence.
+
 ## [0.8.7] - 2026-09-26
 
 ### Changed
