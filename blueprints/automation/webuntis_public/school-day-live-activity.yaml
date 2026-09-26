@@ -23,15 +23,14 @@ blueprint:
           filter:
             - integration: webuntis_public
               domain: sensor
-    notification_device:
-      name: Mobile App device
+    notify_services:
+      name: Mobile notification actions
       description: >
-        Select the Home Assistant Companion App device for the Live Activity.
-        Create another automation from this blueprint for an additional device.
+        Enter a YAML list of Home Assistant Companion mobile notification
+        actions that should receive the Live Activity. Example:
+        ["notify.mobile_app_iphone", "notify.mobile_app_ipad"]
       selector:
-        device:
-          filter:
-            - integration: mobile_app
+        object:
     activity_title:
       name: Title
       default: School
@@ -60,7 +59,7 @@ variables:
   current_lesson_entity: !input current_lesson
   activity_title: !input activity_title
   dashboard_url: !input dashboard_url
-  notification_device: !input notification_device
+  notify_services: !input notify_services
   status: "{{ states(school_status_entity) }}"
   current_subject: "{{ state_attr(school_status_entity, 'current_subject') }}"
   current_end: "{{ state_attr(school_status_entity, 'current_lesson_end_time') }}"
@@ -85,30 +84,28 @@ actions:
               {{ trigger.id | default('') == 'test'
                  and trigger.event.data.device_identifier | default('') == selected_device_identifier }}
         sequence:
-          - device_id: !input notification_device
-            domain: mobile_app
-            type: notify
-            title: "{{ activity_title }} · Test"
-            message: "Mathematics · Room 204"
-            data:
-              tag: "{{ tag }}"
-              live_update: true
-              silent: true
-              chronometer: true
-              when: 600
-              when_relative: true
-              notification_icon: mdi:school
-              url: "{{ dashboard_url }}"
+          - repeat:
+              for_each: "{{ notify_services }}"
+              sequence:
+                - action: "{{ repeat.item }}"
+                  data:
+                    title: "WebUntis Test"
+                    message: "Mathematics · Room 204"
+                    data:
+                      tag: webuntis_test
+                      live_update: true
       - conditions:
           - condition: template
             value_template: "{{ status in ['after_school', 'school_free', 'unknown', 'unavailable'] }}"
         sequence:
-          - device_id: !input notification_device
-            domain: mobile_app
-            type: notify
-            message: clear_notification
-            data:
-              tag: "{{ tag }}"
+          - repeat:
+              for_each: "{{ notify_services }}"
+              sequence:
+                - action: "{{ repeat.item }}"
+                  data:
+                    message: clear_notification
+                    data:
+                      tag: "{{ tag }}"
     default:
       - variables:
           countdown_to: >
@@ -135,17 +132,19 @@ actions:
             {% else %}
               School day
             {% endif %}
-      - device_id: !input notification_device
-        domain: mobile_app
-        type: notify
-        title: "{{ activity_title }}"
-        message: "{{ message_text | trim }}"
-        data:
-          tag: "{{ tag }}"
-          live_update: true
-          silent: true
-          chronometer: "{{ seconds_remaining | int > 0 }}"
-          when: "{{ seconds_remaining | int }}"
-          when_relative: true
-          notification_icon: mdi:school
-          url: "{{ dashboard_url }}"
+      - repeat:
+          for_each: "{{ notify_services }}"
+          sequence:
+            - action: "{{ repeat.item }}"
+              data:
+                title: "{{ activity_title }}"
+                message: "{{ message_text | trim }}"
+                data:
+                  tag: "{{ tag }}"
+                  live_update: true
+                  silent: true
+                  chronometer: "{{ seconds_remaining | int > 0 }}"
+                  when: "{{ seconds_remaining | int }}"
+                  when_relative: true
+                  notification_icon: mdi:school
+                  url: "{{ dashboard_url }}"
