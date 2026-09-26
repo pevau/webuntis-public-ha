@@ -53,3 +53,18 @@ def test_live_activity_test_button_simulates_school_day() -> None:
     assert "message: clear_notification" in text
     assert 'delay: "00:00:05"' in text
     assert 'delay: "00:00:10"' in text
+
+
+def test_live_activity_blueprint_notification_appearance() -> None:
+    """The blueprint exposes HA-native icon settings and increasing progress."""
+    blueprint = _load_blueprint()
+    inputs = blueprint["blueprint"]["input"]
+
+    assert inputs["notification_icon"]["default"] == "mdi:school"
+    assert "icon" in inputs["notification_icon"]["selector"]
+    assert inputs["notification_icon_color"]["default"] == ""
+
+    text = BLUEPRINT.read_text(encoding="utf-8")
+    assert 'notification_icon: "{{ notification_icon }}"' in text
+    assert 'notification_icon_color: "{{ notification_icon_color }}"' in text
+    assert "progress_bar_direction: increasing" in text
