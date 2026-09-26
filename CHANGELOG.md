@@ -2,6 +2,21 @@
 
 All notable changes to **WebUntis Public Timetable** are documented here.
 
+## [0.8.9] - 2026-09-26
+
+### Added
+
+- Added configurable Live Activity notification icons using the native Home Assistant icon picker, defaulting to `mdi:school`.
+- Added an optional notification icon color setting.
+
+### Changed
+
+- Set Live Activity progress bars to use the increasing direction.
+
+### Tests
+
+- Added regression coverage for Live Activity icon, icon color, and progress-bar configuration.
+
 ## [0.8.8] - 2026-09-26
 
 ### Changed
