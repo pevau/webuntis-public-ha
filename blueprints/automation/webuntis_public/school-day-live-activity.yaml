@@ -120,6 +120,9 @@ actions:
                     data:
                       tag: webuntis_test
                       live_update: true
+                      notification_icon: "{{ notification_icon }}"
+                      notification_icon_color: "{{ notification_icon_color }}"
+                      progress_bar_direction: increasing
           - delay: "00:00:05"
           - repeat:
               for_each: "{{ notify_services }}"
@@ -131,9 +134,15 @@ actions:
                     data:
                       tag: webuntis_test
                       live_update: true
+                      notification_icon: "{{ notification_icon }}"
+                      notification_icon_color: "{{ notification_icon_color }}"
+                      progress_bar_direction: increasing
                       chronometer: true
                       when: 10
                       when_relative: true
+                      progress_bar_direction: increasing
+                      notification_icon: "{{ notification_icon }}"
+                      notification_icon_color: "{{ notification_icon_color }}"
           - delay: "00:00:10"
           - repeat:
               for_each: "{{ notify_services }}"
@@ -145,9 +154,15 @@ actions:
                     data:
                       tag: webuntis_test
                       live_update: true
+                      notification_icon: "{{ notification_icon }}"
+                      notification_icon_color: "{{ notification_icon_color }}"
+                      progress_bar_direction: increasing
                       chronometer: true
                       when: 5
                       when_relative: true
+                      progress_bar_direction: increasing
+                      notification_icon: "{{ notification_icon }}"
+                      notification_icon_color: "{{ notification_icon_color }}"
           - delay: "00:00:05"
           - repeat:
               for_each: "{{ notify_services }}"
@@ -159,9 +174,15 @@ actions:
                     data:
                       tag: webuntis_test
                       live_update: true
+                      notification_icon: "{{ notification_icon }}"
+                      notification_icon_color: "{{ notification_icon_color }}"
+                      progress_bar_direction: increasing
                       chronometer: true
                       when: 10
                       when_relative: true
+                      progress_bar_direction: increasing
+                      notification_icon: "{{ notification_icon }}"
+                      notification_icon_color: "{{ notification_icon_color }}"
           - delay: "00:00:10"
           - repeat:
               for_each: "{{ notify_services }}"
