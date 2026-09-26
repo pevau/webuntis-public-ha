@@ -48,6 +48,31 @@ blueprint:
       default: School
       selector:
         text:
+    notification_icon:
+      name: Notification icon
+      description: Select the icon shown for the school Live Activity.
+      default: mdi:school
+      selector:
+        select:
+          options:
+            - label: School
+              value: mdi:school
+            - label: School outline
+              value: mdi:school-outline
+            - label: Book open
+              value: mdi:book-open-variant
+            - label: Calendar
+              value: mdi:calendar
+            - label: Backpack
+              value: mdi:bag-personal
+            - label: Bell
+              value: mdi:bell
+    notification_icon_color:
+      name: Notification icon color
+      description: Optional icon color. Leave empty to use the Companion App default.
+      default: ""
+      selector:
+        text:
     dashboard_url:
       name: Open on tap
       description: Optional Home Assistant path, for example /lovelace/school.
@@ -71,6 +96,8 @@ variables:
   current_lesson_entity: !input current_lesson
   activity_title: !input activity_title
   dashboard_url: !input dashboard_url
+  notification_icon: !input notification_icon
+  notification_icon_color: !input notification_icon_color
   notify_services: !input notify_services
   status: "{{ states(school_status_entity) }}"
   current_subject: "{{ state_attr(school_status_entity, 'current_subject') }}"
@@ -209,5 +236,7 @@ actions:
                   chronometer: "{{ seconds_remaining | int > 0 }}"
                   when: "{{ seconds_remaining | int }}"
                   when_relative: true
-                  notification_icon: mdi:school
+                  notification_icon: "{{ notification_icon }}"
+                  notification_icon_color: "{{ notification_icon_color }}"
+                  progress_bar_direction: increasing
                   url: "{{ dashboard_url }}"
