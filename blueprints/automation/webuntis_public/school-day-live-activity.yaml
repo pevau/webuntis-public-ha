@@ -101,11 +101,62 @@ actions:
               sequence:
                 - action: "{{ repeat.item }}"
                   data:
-                    title: "WebUntis Test"
+                    title: "{{ activity_title }} · Test"
+                    message: "School starts soon · First: Mathematics"
+                    data:
+                      tag: webuntis_test
+                      live_update: true
+          - delay: "00:00:05"
+          - repeat:
+              for_each: "{{ notify_services }}"
+              sequence:
+                - action: "{{ repeat.item }}"
+                  data:
+                    title: "{{ activity_title }} · Test"
                     message: "Mathematics · Room 204"
                     data:
                       tag: webuntis_test
                       live_update: true
+                      chronometer: true
+                      when: 10
+                      when_relative: true
+          - delay: "00:00:10"
+          - repeat:
+              for_each: "{{ notify_services }}"
+              sequence:
+                - action: "{{ repeat.item }}"
+                  data:
+                    title: "{{ activity_title }} · Test"
+                    message: "Break · Next: English"
+                    data:
+                      tag: webuntis_test
+                      live_update: true
+                      chronometer: true
+                      when: 5
+                      when_relative: true
+          - delay: "00:00:05"
+          - repeat:
+              for_each: "{{ notify_services }}"
+              sequence:
+                - action: "{{ repeat.item }}"
+                  data:
+                    title: "{{ activity_title }} · Test"
+                    message: "English · Room 105"
+                    data:
+                      tag: webuntis_test
+                      live_update: true
+                      chronometer: true
+                      when: 10
+                      when_relative: true
+          - delay: "00:00:10"
+          - repeat:
+              for_each: "{{ notify_services }}"
+              sequence:
+                - action: "{{ repeat.item }}"
+                  data:
+                    message: clear_notification
+                    data:
+                      tag: webuntis_test
       - conditions:
           - condition: template
             value_template: "{{ status in ['after_school', 'school_free', 'unknown', 'unavailable'] }}"
