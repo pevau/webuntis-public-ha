@@ -93,14 +93,14 @@ variables:
   next_start: "{{ state_attr(school_status_entity, 'next_lesson_start_time') }}"
   school_end: "{{ state_attr(school_status_entity, 'school_end_time') }}"
   room: "{{ state_attr(current_lesson_entity, 'room') or '' }}"
-  tag: >
-    webuntis_school_day_{{ school_status_entity | replace('.', '_') }}
   selected_device_identifier: >
     {{ device_attr(school_status_entity, 'identifiers')
        | selectattr(0, 'eq', 'webuntis_public')
        | map(attribute=1)
        | first
        | default('') }}
+  tag: >-
+    webuntis_{{ selected_device_identifier | replace('.', '_') | replace('-', '_') }}
 
 actions:
   - variables:
