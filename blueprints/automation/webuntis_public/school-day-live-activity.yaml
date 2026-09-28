@@ -88,9 +88,7 @@ variables:
   notify_services: !input notify_services
   status: "{{ states(school_status_entity) }}"
   current_subject: "{{ state_attr(school_status_entity, 'current_subject') }}"
-  current_end: "{{ state_attr(school_status_entity, 'current_lesson_end_time') }}"
   next_subject: "{{ state_attr(school_status_entity, 'next_subject') }}"
-  next_start: "{{ state_attr(school_status_entity, 'next_lesson_start_time') }}"
   school_start: "{{ state_attr(school_status_entity, 'school_start_time') }}"
   school_end: "{{ state_attr(school_status_entity, 'school_end_time') }}"
   room: "{{ state_attr(current_lesson_entity, 'room') or '' }}"
@@ -202,25 +200,10 @@ actions:
                       tag: "{{ tag }}"
     default:
       - variables:
-          countdown_to: >
-            {% if status == 'lesson' and current_end %}
-              {{ current_end }}
-            {% elif status == 'break' and next_start %}
-              {{ next_start }}
-            {% elif status == 'before_school' and next_start %}
-              {{ next_start }}
-            {% else %}
-              {{ school_end }}
-            {% endif %}
-          seconds_remaining: >
-            {% if countdown_to %}
-              {{ [0, (as_timestamp(countdown_to) - as_timestamp(now())) | int] | max }}
-            {% else %}0{% endif %}
           effective_status: "{{ status }}"
           effective_subject: "{{ current_subject or '' }}"
           effective_room: "{{ room }}"
           effective_next_subject: "{{ next_subject or '' }}"
-          effective_seconds: "{{ seconds_remaining }}"
           effective_progress: >-
             {% set start_ts = as_timestamp(school_start, none) %}
             {% set end_ts = as_timestamp(school_end, none) %}
