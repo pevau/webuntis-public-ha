@@ -4,7 +4,7 @@ blueprint:
     Show the current school day as a Home Assistant Companion Live Activity
     (iOS 17.2+) or Live Update (Android 16+). The activity starts when school
     begins, updates when the school status changes, shows the current subject
-    and school-day progress, and is cleared after school.
+    and end time, and is cleared after school.
   domain: automation
   input:
     school_status:
@@ -89,8 +89,8 @@ variables:
   status: "{{ states(school_status_entity) }}"
   current_subject: "{{ state_attr(school_status_entity, 'current_subject') }}"
   next_subject: "{{ state_attr(school_status_entity, 'next_subject') }}"
-  school_start: "{{ state_attr(school_status_entity, 'school_start_time') }}"
-  school_end: "{{ state_attr(school_status_entity, 'school_end_time') }}"
+  current_end: "{{ state_attr(school_status_entity, 'current_lesson_end_time') }}"
+  next_start: "{{ state_attr(school_status_entity, 'next_lesson_start_time') }}"
   room: "{{ state_attr(current_lesson_entity, 'room') or '' }}"
   selected_device_identifier: >
     {{ device_attr(school_status_entity, 'identifiers')
@@ -118,25 +118,21 @@ actions:
                   room: ""
                   next_subject: Mathematics
                   seconds: 5
-                  progress: 0
                 - status: lesson
                   subject: Mathematics
                   room: Room 204
                   next_subject: English
                   seconds: 10
-                  progress: 25
                 - status: break
                   subject: ""
                   room: ""
                   next_subject: English
                   seconds: 5
-                  progress: 50
                 - status: lesson
                   subject: English
                   room: Room 105
                   next_subject: ""
                   seconds: 10
-                  progress: 75
           - repeat:
               for_each: "{{ test_steps }}"
               sequence:
@@ -146,16 +142,16 @@ actions:
                     effective_room: "{{ repeat.item.room }}"
                     effective_next_subject: "{{ repeat.item.next_subject }}"
                     effective_seconds: "{{ repeat.item.seconds }}"
-                    effective_progress: "{{ repeat.item.progress }}"
+                    effective_until: "{{ (now() + timedelta(seconds=effective_seconds | int)).isoformat() }}"
                     effective_tag: webuntis_test
                     effective_title: "{{ activity_title }} · Test"
                     effective_message: >
                       {% if effective_status == 'lesson' %}
-                        {{ effective_subject or 'Lesson' }}{% if effective_room %} · {{ effective_room }}{% endif %}
+                        {{ effective_subject or 'Lesson' }}{% if effective_room %} · {{ effective_room }}{% endif %}{% if effective_until %} – until {{ as_timestamp(effective_until) | timestamp_custom('%H:%M', true) }}{% endif %}
                       {% elif effective_status == 'break' %}
-                        Break{% if effective_next_subject %} · Next: {{ effective_next_subject }}{% endif %}
+                        Break{% if effective_next_subject %} · Next: {{ effective_next_subject }}{% endif %}{% if effective_until %} · {{ as_timestamp(effective_until) | timestamp_custom('%H:%M', true) }}{% endif %}
                       {% elif effective_status == 'before_school' %}
-                        {% if effective_next_subject %}First: {{ effective_next_subject }}{% else %}School starts soon{% endif %}
+                        {% if effective_next_subject %}First: {{ effective_next_subject }}{% else %}School starts soon{% endif %}{% if effective_until %} · {{ as_timestamp(effective_until) | timestamp_custom('%H:%M', true) }}{% endif %}
                       {% else %}
                         School day
                       {% endif %}
@@ -170,11 +166,8 @@ actions:
                             tag: "{{ effective_tag }}"
                             live_update: true
                             silent: true
-                            progress: "{{ effective_progress | int }}"
-                            progress_max: 100
                             notification_icon: "{{ notification_icon }}"
                             notification_icon_color: "{{ notification_icon_color or '#FFFFFF' }}"
-                            progress_bar_direction: increasing
                             url: "{{ dashboard_url }}"
                 - delay:
                     seconds: "{{ effective_seconds | int }}"
@@ -204,23 +197,16 @@ actions:
           effective_subject: "{{ current_subject or '' }}"
           effective_room: "{{ room }}"
           effective_next_subject: "{{ next_subject or '' }}"
-          effective_progress: >-
-            {% set start_ts = as_timestamp(school_start, none) %}
-            {% set end_ts = as_timestamp(school_end, none) %}
-            {% if start_ts is not none and end_ts is not none and end_ts > start_ts %}
-              {{ [0, [100, ((as_timestamp(now()) - start_ts) / (end_ts - start_ts) * 100) | int] | min] | max }}
-            {% else %}
-              0
-            {% endif %}
+          effective_until: "{{ current_end if status == 'lesson' else next_start if status in ['before_school', 'break'] else '' }}"
           effective_tag: "{{ tag }}"
           effective_title: "{{ activity_title }}"
           effective_message: >
             {% if effective_status == 'lesson' %}
-              {{ effective_subject or 'Lesson' }}{% if effective_room %} · {{ effective_room }}{% endif %}
+              {{ effective_subject or 'Lesson' }}{% if effective_room %} · {{ effective_room }}{% endif %}{% if effective_until %} – until {{ as_timestamp(effective_until) | timestamp_custom('%H:%M', true) }}{% endif %}
             {% elif effective_status == 'break' %}
-              Break{% if effective_next_subject %} · Next: {{ effective_next_subject }}{% endif %}
+              Break{% if effective_next_subject %} · Next: {{ effective_next_subject }}{% endif %}{% if effective_until %} · {{ as_timestamp(effective_until) | timestamp_custom('%H:%M', true) }}{% endif %}
             {% elif effective_status == 'before_school' %}
-              {% if effective_next_subject %}First: {{ effective_next_subject }}{% else %}School starts soon{% endif %}
+              {% if effective_next_subject %}First: {{ effective_next_subject }}{% else %}School starts soon{% endif %}{% if effective_until %} · {{ as_timestamp(effective_until) | timestamp_custom('%H:%M', true) }}{% endif %}
             {% else %}
               School day
             {% endif %}
@@ -235,9 +221,6 @@ actions:
                   tag: "{{ effective_tag }}"
                   live_update: true
                   silent: true
-                  progress: "{{ effective_progress | int }}"
-                  progress_max: 100
                   notification_icon: "{{ notification_icon }}"
                   notification_icon_color: "{{ notification_icon_color or '#FFFFFF' }}"
-                  progress_bar_direction: increasing
                   url: "{{ dashboard_url }}"
