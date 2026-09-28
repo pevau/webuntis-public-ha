@@ -53,13 +53,22 @@ def test_live_activity_test_button_simulates_school_day() -> None:
     assert "subject: English" in text
     assert "Room 204" in text
     assert "Room 105" in text
+    assert "progress: 0" in text
+    assert "progress: 25" in text
+    assert "progress: 50" in text
+    assert "progress: 75" in text
     assert "message: clear_notification" in text
 
     # Test and production both use the same effective payload fields.
     assert 'message: "{{ effective_message | trim }}"' in text
     assert 'notification_icon: "{{ notification_icon }}"' in text
-    assert 'notification_icon_color: "{{ notification_icon_color }}"' in text
+    assert 'notification_icon_color: "{{ notification_icon_color or \'#FFFFFF\' }}"' in text
     assert "progress_bar_direction: increasing" in text
+    assert text.count('progress: "{{ effective_progress | int }}"') == 2
+    assert text.count("progress_max: 100") == 2
+    assert "chronometer:" not in text  # iOS shows the subject in the message line.
+    assert "school_start_time" in text
+    assert "school_end_time" in text
     assert 'url: "{{ dashboard_url }}"' in text
 
     actions = blueprint["actions"]
