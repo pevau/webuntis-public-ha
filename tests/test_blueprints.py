@@ -86,5 +86,5 @@ def test_live_activity_blueprint_notification_appearance() -> None:
 
     text = BLUEPRINT.read_text(encoding="utf-8")
     assert 'notification_icon: "{{ notification_icon }}"' in text
-    assert 'notification_icon_color: "{{ notification_icon_color }}"' in text
+    assert 'notification_icon_color: "{{ notification_icon_color or \'#FFFFFF\' }}"' in text
     assert "progress_bar_direction: increasing" in text
