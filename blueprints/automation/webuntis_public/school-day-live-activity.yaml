@@ -147,7 +147,7 @@ actions:
                     effective_title: "{{ activity_title }} · Test"
                     effective_message: >
                       {% if effective_status == 'lesson' %}
-                        {{ effective_subject or 'Lesson' }}{% if effective_room %} · {{ effective_room }}{% endif %}{% if effective_until %} – until {{ as_timestamp(effective_until) | timestamp_custom('%H:%M', true) }}{% endif %}
+                        {{ effective_subject or 'Lesson' }}{% if effective_room %} · {{ effective_room }}{% endif %}{% if effective_until %} – bis {{ as_timestamp(effective_until) | timestamp_custom('%H:%M', true) }} Uhr{% endif %}
                       {% elif effective_status == 'break' %}
                         Break{% if effective_next_subject %} · Next: {{ effective_next_subject }}{% endif %}{% if effective_until %} · {{ as_timestamp(effective_until) | timestamp_custom('%H:%M', true) }}{% endif %}
                       {% elif effective_status == 'before_school' %}
@@ -202,7 +202,7 @@ actions:
           effective_title: "{{ activity_title }}"
           effective_message: >
             {% if effective_status == 'lesson' %}
-              {{ effective_subject or 'Lesson' }}{% if effective_room %} · {{ effective_room }}{% endif %}{% if effective_until %} – until {{ as_timestamp(effective_until) | timestamp_custom('%H:%M', true) }}{% endif %}
+              {{ effective_subject or 'Lesson' }}{% if effective_room %} · {{ effective_room }}{% endif %}{% if effective_until %} – bis {{ as_timestamp(effective_until) | timestamp_custom('%H:%M', true) }} Uhr{% endif %}
             {% elif effective_status == 'break' %}
               Break{% if effective_next_subject %} · Next: {{ effective_next_subject }}{% endif %}{% if effective_until %} · {{ as_timestamp(effective_until) | timestamp_custom('%H:%M', true) }}{% endif %}
             {% elif effective_status == 'before_school' %}
