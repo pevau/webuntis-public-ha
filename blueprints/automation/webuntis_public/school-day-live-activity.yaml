@@ -192,6 +192,8 @@ actions:
                     data:
                       tag: "{{ tag }}"
     default:
+      - condition: template
+        value_template: "{{ status in ['lesson', 'break'] }}"
       - variables:
           effective_status: "{{ status }}"
           effective_subject: "{{ current_subject or '' }}"
