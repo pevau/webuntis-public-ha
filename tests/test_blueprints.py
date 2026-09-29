@@ -82,3 +82,16 @@ def test_live_activity_blueprint_notification_appearance() -> None:
     text = BLUEPRINT.read_text(encoding="utf-8")
     assert 'notification_icon: "{{ notification_icon }}"' in text
     assert 'notification_icon_color: "{{ notification_icon_color or \'#FFFFFF\' }}"' in text
+
+
+def test_live_activity_does_not_start_before_school() -> None:
+    """Midnight's before_school status must stop before the notification payload."""
+    blueprint = _load_blueprint()
+    choose = blueprint["actions"][1]
+    production = choose["default"]
+
+    assert production[0]["condition"] == "template"
+    assert production[0]["value_template"] == "{{ status in ['lesson', 'break'] }}"
+    # Keep explicit test runs and end-of-day clearing outside the production gate.
+    assert choose["choose"][0]["conditions"][0]["value_template"] == "{{ is_test }}"
+    assert choose["choose"][1]["sequence"][0]["repeat"]["sequence"][0]["data"]["message"] == "clear_notification"
