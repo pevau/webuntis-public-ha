@@ -2,7 +2,7 @@
 
 All notable changes to **WebUntis Public Timetable** are documented here.
 
-## [Unreleased]
+## [0.8.11] - 2026-10-04
 
 ### Fixed
 
