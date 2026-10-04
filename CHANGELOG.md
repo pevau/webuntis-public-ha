@@ -2,6 +2,13 @@
 
 All notable changes to **WebUntis Public Timetable** are documented here.
 
+## [0.8.11] - 2026-10-04
+
+### Fixed
+
+- Subject exclusions ignore trailing exclamation marks on both timetable names and configured exclusions, so `AG leben` also excludes `AG leben!`. Displayed names and other punctuation remain unchanged.
+- Added regression tests for marked subject names and exact matching of unrelated subjects.
+
 ## [0.8.10] - 2026-09-26
 
 ### Changed

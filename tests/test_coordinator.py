@@ -221,6 +221,46 @@ def test_cached_lessons_excludes_configured_subjects_case_insensitively() -> Non
     assert [lesson.subject for lesson in lessons] == ["Englisch"]
 
 
+@pytest.mark.parametrize(
+    ("subject", "excluded", "is_excluded"),
+    [
+        ("AG leben!", "AG leben", True),
+        ("AG leben!", "AG leben!", True),
+        ("AG leben", "AG leben!", True),
+        ("AG leben!", " ag LEBEN! ", True),
+        ("AG leben !!", "AG leben", True),
+        ("AG leben!", "AG", False),
+        ("AG leben!", "AG leben lernen", False),
+        ("AG! leben", "AG leben", False),
+        ("AG leben?", "AG leben", False),
+        ("AG leben!", "!", False),
+    ],
+)
+def test_cached_lessons_exclusion_handles_trailing_exclamation_marks(
+    subject: str, excluded: str, is_excluded: bool
+) -> None:
+    item = _bare_coordinator()
+    item.hass = SimpleNamespace(config=SimpleNamespace(time_zone="Europe/Vienna"))
+    item.entry = SimpleNamespace(options={OPT_EXCLUDE_SUBJECTS: excluded})
+    start = datetime(2026, 9, 21, 8, 0, tzinfo=UTC)
+    end = start + timedelta(minutes=45)
+    item._weeks["2026-09-21"] = {
+        "fetched_at": datetime.now(UTC),
+        "entries": [
+            _entry(start, end, subject=subject),
+            _entry(start + timedelta(hours=1), end + timedelta(hours=1), subject="Englisch"),
+        ],
+    }
+
+    lessons = item.cached_lessons_between(
+        start - timedelta(hours=1), end + timedelta(hours=2)
+    )
+
+    assert [lesson.subject for lesson in lessons] == (
+        ["Englisch"] if is_excluded else [subject, "Englisch"]
+    )
+
+
 def test_parse_utc_normalizes_naive_and_offset_datetimes() -> None:
     naive = WebUntisPublicCoordinator._parse_utc("2026-09-23T10:00:00")
     offset = WebUntisPublicCoordinator._parse_utc("2026-09-23T12:00:00+02:00")

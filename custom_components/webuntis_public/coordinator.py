@@ -38,6 +38,11 @@ STORAGE_VERSION = 1
 MAX_STALE_CACHE_AGE = timedelta(hours=24)
 
 
+def _normalize_excluded_subject(value: str) -> str:
+    """Ignore trailing exclamation marks when matching subject exclusions."""
+    return value.strip().rstrip("! \t\r\n").casefold()
+
+
 class WebUntisTemporaryUnavailable(Exception):
     """Raised when WebUntis is unavailable and no cached week exists."""
 
@@ -275,7 +280,7 @@ class WebUntisPublicCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             lesson
             for lesson in lessons
             if not any(
-                subject.casefold() in excluded_subjects
+                _normalize_excluded_subject(subject) in excluded_subjects
                 for subject in (
                     lesson.subject,
                     *lesson.subjects,
@@ -294,9 +299,9 @@ class WebUntisPublicCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             return set()
 
         return {
-            value.strip().casefold()
+            normalized
             for value in raw_value.replace("\n", ",").split(",")
-            if value.strip()
+            if (normalized := _normalize_excluded_subject(value))
         }
 
     async def _async_ensure_range(

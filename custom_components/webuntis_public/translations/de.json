@@ -102,7 +102,7 @@
           "show_room": "Zeigt den Raum in den Termindetails und als Kalender-Ort.",
           "show_class": "Zeigt die ausgewählte Klasse in der Terminbeschreibung.",
           "next_lesson_days": "Wie viele Tage voraus nach der nächsten Unterrichtsstunde gesucht wird.",
-          "exclude_subjects": "Kommagetrennt oder ein Fach pro Zeile. Der Abgleich ist exakt, ignoriert Groß-/Kleinschreibung und entfernt passende Fächer aus Kalendern und Sensoren."
+          "exclude_subjects": "Kommagetrennt oder ein Fach pro Zeile. Der Abgleich ignoriert Groß-/Kleinschreibung und Ausrufezeichen am Ende (z. B. AG leben / AG leben!), ist ansonsten exakt und entfernt passende Fächer aus Kalendern und Sensoren."
         }
       }
     },
