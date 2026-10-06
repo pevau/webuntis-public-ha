@@ -1095,3 +1095,59 @@ def test_semantic_events_skip_date_present_on_only_one_side() -> None:
     )
 
     assert item._semantic_events(old, []) == []
+
+
+@pytest.mark.parametrize("change_kind", ["teacher", "room", "cancelled", "time", "added", "removed"])
+@pytest.mark.parametrize("mixed", [False, True])
+def test_timetable_change_respects_subject_exclusions(
+    monkeypatch: pytest.MonkeyPatch, change_kind: str, mixed: bool
+) -> None:
+    item = _bare_coordinator()
+    item.hass = SimpleNamespace(config=SimpleNamespace(time_zone="Europe/Vienna"))
+    item.entry = SimpleNamespace(options={OPT_EXCLUDE_SUBJECTS: " ag LEBEN "})
+    monday = Date(2026, 9, 21)
+    monkeypatch.setattr(
+        coordinator_module.dt_util, "now",
+        lambda: datetime(2026, 9, 23, 12, 0, tzinfo=UTC),
+    )
+    start = datetime(2026, 9, 24, 8, 0, tzinfo=UTC)
+    end = start + timedelta(minutes=45)
+    old = _entry(start, end, subject="AG leben!")
+    new = _entry(
+        start + (timedelta(hours=3) if change_kind == "time" else timedelta()),
+        end + (timedelta(hours=3) if change_kind == "time" else timedelta()),
+        subject="AG leben!",
+        teacher="Other teacher" if change_kind == "teacher" else "Anna Beispiel",
+        room="B202" if change_kind == "room" else "A101",
+        status="CANCELLED" if change_kind == "cancelled" else "REGULAR",
+    )
+    old_entries = [] if change_kind == "added" else [old]
+    new_entries = [] if change_kind == "removed" else [new]
+    visible_start = start + timedelta(hours=1)
+    visible_end = end + timedelta(hours=1)
+    old_entries.append(_entry(visible_start, visible_end))
+    new_entries.append(_entry(
+        visible_start, visible_end,
+        teacher="New teacher" if mixed else "Anna Beispiel",
+    ))
+
+    change = item._detect_timetable_change(monday, old_entries, new_entries)
+
+    if not mixed:
+        assert change is None
+    else:
+        assert change is not None
+        assert change["added_count"] == change["removed_count"] == 1
+        assert [lesson["subject"] for lesson in change["added"]] == ["Mathematik"]
+        assert [lesson["subject"] for lesson in change["removed"]] == ["Mathematik"]
+        assert [event["event_type"] for event in change["semantic_events"]] == ["lesson_substituted"]
+
+    item._weeks[monday.isoformat()] = {
+        "fetched_at": datetime.now(UTC), "entries": old_entries,
+    }
+    item._force_refresh = True
+    monkeypatch.setattr(item, "_async_fetch_week", AsyncMock(return_value=new_entries))
+    asyncio.run(item._async_refresh_week_if_needed(monday))
+    assert item._weeks[monday.isoformat()]["entries"] == new_entries
+    assert item.timetable_change_sequence == (1 if mixed else 0)
+    assert len(item.timetable_changes_since(0)) == (1 if mixed else 0)

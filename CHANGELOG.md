@@ -2,6 +2,13 @@
 
 All notable changes to **WebUntis Public Timetable** are documented here.
 
+## [Unreleased]
+
+### Fixed
+
+- Apply configured subject exclusions before detecting timetable changes, including semantic lesson and school-day boundary events. Changes affecting only excluded lessons no longer trigger notification automations.
+- Added regression tests for excluded lesson additions, removals, cancellations, teacher/room/time changes, and mixed updates involving relevant lessons.
+
 ## [0.8.11] - 2026-10-04
 
 ### Fixed

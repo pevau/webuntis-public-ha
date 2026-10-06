@@ -272,6 +272,12 @@ class WebUntisPublicCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         # may omit technical IDs, and distinct simultaneous lessons must not be
         # discarded merely because their duration is identical.
         lessons = parse_lessons(entries, start_local, end_local, tz)
+        return self._filter_excluded_lessons(lessons)
+
+    def _filter_excluded_lessons(
+        self, lessons: list[WebUntisLesson]
+    ) -> list[WebUntisLesson]:
+        """Apply the same subject exclusions to displayed lessons and events."""
         excluded_subjects = self._excluded_subjects()
         if not excluded_subjects:
             return lessons
@@ -538,21 +544,15 @@ class WebUntisPublicCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         old_lessons = [
             lesson
-            for lesson in parse_lessons(
-                old_entries,
-                start_local,
-                end_local,
-                tz,
+            for lesson in self._filter_excluded_lessons(
+                parse_lessons(old_entries, start_local, end_local, tz)
             )
             if lesson.end > now_local
         ]
         new_lessons = [
             lesson
-            for lesson in parse_lessons(
-                new_entries,
-                start_local,
-                end_local,
-                tz,
+            for lesson in self._filter_excluded_lessons(
+                parse_lessons(new_entries, start_local, end_local, tz)
             )
             if lesson.end > now_local
         ]
